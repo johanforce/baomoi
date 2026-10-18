@@ -10,6 +10,7 @@ import {
   Check,
 } from 'lucide-react';
 import { StatusDot } from './StatusDot';
+import { getLatestArticleDateForSource } from '../services/db';
 import { sourcesStore, useSourcesStore } from '../store/sourcesStore';
 import { FeedStatus, SourceItem } from '../types';
 import { formatRelativeTimeVi } from '../utils/date';
@@ -29,6 +30,28 @@ export const SourceRow: React.FC<SourceRowProps> = ({
   const [urlInput, setUrlInput] = useState(source.feed_url);
   const [isUrlDirty, setIsUrlDirty] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isOldFeed, setIsOldFeed] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    getLatestArticleDateForSource(source.id).then((latestPubDate) => {
+      if (!isMounted) return;
+      if (!latestPubDate) {
+        setIsOldFeed(false);
+        return;
+      }
+      const t = new Date(latestPubDate).getTime();
+      const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+      if (!isNaN(t) && Date.now() - t > threeDaysMs) {
+        setIsOldFeed(true);
+      } else {
+        setIsOldFeed(false);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [source.id, status?.lastChecked, status?.articleCount]);
 
   useEffect(() => {
     setUrlInput(source.feed_url);
@@ -97,6 +120,14 @@ export const SourceRow: React.FC<SourceRowProps> = ({
                 {source.title}
               </span>
               <StatusDot state={currentState} showLabel={true} />
+              {isOldFeed && (
+                <span
+                  className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800"
+                  title="Bài mới nhất của nguồn này cách hiện tại hơn 3 ngày"
+                >
+                  Feed cũ
+                </span>
+              )}
               {isModified && (
                 <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
                   Đã tùy biến

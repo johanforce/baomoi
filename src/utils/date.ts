@@ -139,17 +139,90 @@ export function formatRelativeTimeVi(dateInput: string | Date | number): string 
 }
 
 /**
- * Chuyển đổi ngày RSS (RFC 822 hoặc ISO) thành ISO string hợp lệ
+ * Chuyển đổi ngày RSS (RFC 822 chuẩn, năm 2 chữ số, kiểu Mỹ, ISO,...) thành ISO string hợp lệ
  */
 export function parseRssDate(dateStr?: string | null): string {
-  if (!dateStr) return new Date().toISOString();
+  if (!dateStr || !dateStr.trim()) return new Date().toISOString();
+
+  let s = dateStr.trim();
+
+  // 1. Định dạng ISO "YYYY-MM-DD HH:mm:ss" (CafeBiz) hoặc "YYYY-MM-DDTHH:mm:ss", không có múi giờ
+  const isoNoTz = /^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/i.exec(s);
+  if (isoNoTz) {
+    const [, year, month, day, hour = '00', min = '00', sec = '00'] = isoNoTz;
+    // Coi là giờ Việt Nam (UTC+7)
+    const utcMs = Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour) - 7,
+      Number(min),
+      Number(sec)
+    );
+    const d = new Date(utcMs);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+
+  // 2. Kiểu Mỹ MM/DD/YYYY hh:mm:ss AM/PM (Tuổi Trẻ, ví dụ "10/18/2026 12:10:00 PM"), không có múi giờ
+  const usDateMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?$/i.exec(s);
+  if (usDateMatch) {
+    const [, month, day, year, hourStr, minStr = '00', secStr = '00', ampm] = usDateMatch;
+    let h = hourStr ? Number(hourStr) : 0;
+    const m = Number(minStr);
+    const sec = Number(secStr);
+
+    if (ampm) {
+      const isPm = ampm.toUpperCase() === 'PM';
+      if (isPm && h < 12) h += 12;
+      if (!isPm && h === 12) h = 0;
+    }
+
+    // Coi là giờ Việt Nam (UTC+7)
+    const utcMs = Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      h - 7,
+      m,
+      sec
+    );
+    const d = new Date(utcMs);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+
+  // 3. Múi giờ viết tắt "+07", "-05" (thiếu 2 số 0) -> "+0700"
+  s = s.replace(/([+-]\d{2})$/, '$100').replace(/([+-]\d{2})\s+/, '$100 ');
+
+  // 4. RFC 822 với năm 2 chữ số (ví dụ "Sun, 18 Oct 26 12:00:00 +0700") -> năm 2026
+  const rfc2DigitYear = /(\b\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+)(\d{2})(\s+\d{2}:\d{2}(?::\d{2})?)/i;
+  if (rfc2DigitYear.test(s)) {
+    s = s.replace(rfc2DigitYear, (_m, prefix, yy, suffix) => {
+      const yearNum = Number(yy);
+      const fullYear = yearNum < 50 ? 2000 + yearNum : 1900 + yearNum;
+      return `${prefix}${fullYear}${suffix}`;
+    });
+  }
+
+  // 5. Thử parse ngày bằng Date thông thường
   try {
-    const d = new Date(dateStr);
-    if (!isNaN(d.getTime())) {
-      return d.toISOString();
+    const parsed = new Date(s);
+    if (!isNaN(parsed.getTime()) && parsed.getFullYear() >= 1990 && parsed.getFullYear() <= 2100) {
+      const hasTz = /(?:Z|GMT|UTC|[+-]\d{2}:?\d{2})$/i.test(s) || /[+-]\d{4}/.test(s);
+      if (!hasTz) {
+        // Chuỗi không có múi giờ -> coi là giờ Việt Nam (UTC+7)
+        const y = parsed.getFullYear();
+        const m = parsed.getMonth();
+        const d = parsed.getDate();
+        const h = parsed.getHours();
+        const min = parsed.getMinutes();
+        const sec = parsed.getSeconds();
+        return new Date(Date.UTC(y, m, d, h - 7, min, sec)).toISOString();
+      }
+      return parsed.toISOString();
     }
   } catch {
     // fallback
   }
+
   return new Date().toISOString();
 }

@@ -90,6 +90,28 @@ export async function getSourceCountsFromDB(dateStr?: string): Promise<Record<st
   return counts;
 }
 
+/**
+ * Lấy ngày pubDate của bài viết mới nhất thuộc nguồn sourceId
+ */
+export async function getLatestArticleDateForSource(sourceId: string): Promise<string | null> {
+  const db = await getDB();
+  const tx = db.transaction('articles', 'readonly');
+  const index = tx.store.index('by-source');
+  const articles = await index.getAll(sourceId);
+  if (!articles || articles.length === 0) return null;
+
+  let maxTime = 0;
+  let maxPubDate: string | null = null;
+  for (const item of articles) {
+    const t = new Date(item.pubDate).getTime();
+    if (!isNaN(t) && t > maxTime) {
+      maxTime = t;
+      maxPubDate = item.pubDate;
+    }
+  }
+  return maxPubDate;
+}
+
 export interface ArticleQueryFilter {
   dateStr?: string;
   categoryName?: string;

@@ -3,6 +3,7 @@ import { Bookmark, ExternalLink } from 'lucide-react';
 import { sourcesStore, useSourcesStore } from '../store/sourcesStore';
 import { Article } from '../types';
 import { formatRelativeTimeVi } from '../utils/date';
+import catLogo from '../assets/images/cat.jpg';
 
 interface FeaturedArticleProps {
   article: Article;
@@ -45,21 +46,27 @@ export const FeaturedArticle: React.FC<FeaturedArticleProps> = ({ article }) => 
               className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-900/10 via-slate-100 to-slate-200 dark:from-emerald-950/40 dark:via-slate-800 dark:to-slate-900 p-6 text-center">
-              <span className="text-3xl font-extrabold text-[#00A859]/30 mb-2">TinTổngHợp</span>
+            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-900/10 via-slate-100 to-slate-200 dark:from-emerald-950/40 dark:via-slate-800 dark:to-slate-900 p-4 sm:p-6 text-center">
+              <img
+                src={catLogo}
+                alt="Lều Báo"
+                className="w-14 h-14 rounded-full shadow-sm mb-2 object-cover opacity-85"
+                referrerPolicy="no-referrer"
+              />
+              <span className="text-xl sm:text-2xl font-extrabold text-slate-700 dark:text-slate-300">Lều Báo</span>
               <span className="text-xs text-slate-500">{article.sourceName}</span>
             </div>
           )}
 
           {/* Source badge overlay */}
-          <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-xs text-white text-xs font-semibold px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5">
+          <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 bg-black/70 backdrop-blur-xs text-white text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5">
             <span>{article.sourceName}</span>
           </div>
 
           {/* Bookmark button */}
           <button
             onClick={handleBookmark}
-            className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-xs transition-all ${
+            className={`absolute top-2.5 right-2.5 sm:top-3 sm:right-3 p-2 rounded-full backdrop-blur-xs transition-all ${
               isBookmarked
                 ? 'bg-[#00A859] text-white shadow-md'
                 : 'bg-black/50 text-white/90 hover:bg-black/80 hover:text-white'
@@ -67,31 +74,31 @@ export const FeaturedArticle: React.FC<FeaturedArticleProps> = ({ article }) => 
             title={isBookmarked ? 'Bỏ lưu' : 'Lưu đọc sau'}
             aria-label="Lưu bài viết"
           >
-            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+            <Bookmark className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isBookmarked ? 'fill-current' : ''}`} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-5">
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">
+        <div className="p-3.5 sm:p-5">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">
             <span className="text-[#00A859] font-semibold">{article.categoryName}</span>
-            <span aria-hidden="true">·</span>
+            <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
             <time>{formatRelativeTimeVi(article.pubDate)}</time>
           </div>
 
           <h2
-            className={`text-xl sm:text-2xl font-bold tracking-tight mb-2.5 group-hover:text-[#00A859] transition-colors leading-snug line-clamp-2 ${
+            className={`text-base sm:text-xl md:text-2xl font-bold tracking-tight mb-2 sm:mb-2.5 group-hover:text-[#00A859] transition-colors leading-snug line-clamp-2 ${
               isRead ? 'text-slate-500 dark:text-slate-400 font-normal' : 'text-slate-900 dark:text-white'
             }`}
           >
             {article.title}
           </h2>
 
-          <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed mb-4">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed mb-3 sm:mb-4">
             {article.description}
           </p>
 
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-between pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
             <span className="font-semibold text-slate-700 dark:text-slate-300">{article.sourceName}</span>
             <span className="inline-flex items-center gap-1 text-[#00A859] font-medium group-hover:underline">
               Đọc bản gốc <ExternalLink className="w-3.5 h-3.5" />

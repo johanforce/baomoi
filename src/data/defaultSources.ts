@@ -88,8 +88,6 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
         ["ban-doc", "Bạn đọc"],
         ["dien-dan", "Diễn đàn"],
         ["ban-can-biet", "Bạn cần biết"],
-        ["tin-24h", "Tin 24h"],
-        ["tin-nhanh-360", "Tin nhanh 360"],
         ["tno", "TNO"],
         ["video", "Video"],
         ["podcast", "Podcast"],
@@ -130,7 +128,7 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
       // VietNamNet (chỉ thoi-su đã xác nhận chạy tốt; các kênh còn lại lấy từ trang tổng hợp bên thứ ba, chưa kiểm tra)
       ...feeds("Báo VietNamNet", P_VNN, VNN, [
         ["thoi-su", "Thời sự"],
-        ["thoi-su-chinh-tri", "Thời sự - Chính trị"],
+        ["chinh-tri", "Chính trị"],
         ["the-gioi", "Thế giới"],
         ["giao-duc", "Giáo dục"],
         ["phap-luat", "Pháp luật"],
@@ -221,7 +219,6 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
 
       ...feeds("Báo Thanh Niên", P_TN, TN, [
         ["kinh-te", "Kinh tế"],
-        ["thi-truong", "Thị trường"],
         ["tieu-dung-thong-minh", "Tiêu dùng thông minh"],
         ["viec-lam", "Việc làm"],
         ["kinh-te/kinh-te-xanh", "Kinh tế - Kinh tế xanh"],

@@ -198,20 +198,31 @@ export default function App() {
           />
 
           {/* Main 3-Column Content Layout */}
-          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-5">
+          <main className="flex-1 w-full px-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-3.5 sm:py-5">
             {/* Mobile Filter Action Bar */}
-            <div className="md:hidden flex items-center justify-between gap-3 mb-4 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                <Calendar className="w-4 h-4 text-[#00A859]" />
-                <span>{formatFriendlyDate(selectedDate)}</span>
+            <div className="md:hidden flex items-center justify-between gap-2 mb-3 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                <Calendar className="w-3.5 h-3.5 text-[#00A859] shrink-0" />
+                <span className="truncate">{formatFriendlyDate(selectedDate)}</span>
               </div>
-              <button
-                onClick={() => setIsMobileFilterOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00A859]/10 text-[#00A859] rounded-lg text-xs font-bold"
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>Bộ lọc báo ({selectedSourceIds.length === 0 ? 'Tất cả' : selectedSourceIds.length})</span>
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => sourcesStore.fetchAllSources({ forceAll: false })}
+                  disabled={isRefreshingAll}
+                  className="p-1.5 text-slate-500 hover:text-[#00A859] rounded-lg active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
+                  title="Tải lại tin mới"
+                  aria-label="Tải lại tin mới"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingAll ? 'animate-spin text-[#00A859]' : ''}`} />
+                </button>
+                <button
+                  onClick={() => setIsMobileFilterOpen(true)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#00A859]/10 text-[#00A859] hover:bg-[#00A859]/20 rounded-lg text-xs font-bold active:scale-95 transition-all"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Lọc báo ({selectedSourceIds.length === 0 ? 'Tất cả' : selectedSourceIds.length})</span>
+                </button>
+              </div>
             </div>
 
             {/* Error Banner when feeds fail */}
@@ -220,9 +231,9 @@ export default function App() {
               onOpenSourceManager={() => handleOpenSourceManager('error')}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-              {/* Left Column (Desktop): Date & Newspaper Filters (3 cols) */}
-              <div className="hidden md:block md:col-span-3 sticky top-20">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6 xl:gap-8 items-start">
+              {/* Left Column (Desktop): Date & Newspaper Filters */}
+              <div className="hidden md:block md:col-span-4 lg:col-span-3 xl:col-span-3 2xl:col-span-2 sticky top-20">
                 <SourceSidebar
                   selectedCategory={selectedCategory}
                   selectedDate={selectedDate}
@@ -236,8 +247,8 @@ export default function App() {
                 />
               </div>
 
-              {/* Middle Column: News Feed (6 cols on lg, 9 cols on md) */}
-              <div className="col-span-1 md:col-span-9 lg:col-span-6 space-y-4">
+              {/* Middle Column: News Feed */}
+              <div className="col-span-1 md:col-span-8 lg:col-span-6 xl:col-span-6 2xl:col-span-7 space-y-3.5 sm:space-y-4">
                 {/* Status Bar */}
                 <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
                   <div className="flex items-center gap-2">
@@ -320,7 +331,7 @@ export default function App() {
               </div>
 
               {/* Right Column (Desktop LG): Trending & Newspaper Stats (3 cols) */}
-              <div className="hidden lg:block lg:col-span-3 sticky top-20">
+              <div className="hidden lg:block lg:col-span-3 xl:col-span-3 2xl:col-span-3 sticky top-20">
                 <TrendingPanel
                   topArticles={topRecentArticles}
                   sourceCounts={sourceCounts}

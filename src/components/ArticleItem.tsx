@@ -25,8 +25,8 @@ export const ArticleItem: React.FC<ArticleItemProps> = ({ article }) => {
   };
 
   return (
-    <article className="group bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200/70 dark:border-slate-800 transition-all hover:border-[#00A859]/40 hover:shadow-xs">
-      <div className="flex gap-4 sm:gap-5 items-start justify-between">
+    <article className="group bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 rounded-xl border border-slate-200/70 dark:border-slate-800 transition-all hover:border-[#00A859]/40 hover:shadow-xs active:bg-slate-50/50 dark:active:bg-slate-800/40">
+      <div className="flex gap-3 sm:gap-4 md:gap-5 items-start justify-between">
         {/* Left: Text Content */}
         <div className="flex-1 min-w-0">
           <a
@@ -37,7 +37,7 @@ export const ArticleItem: React.FC<ArticleItemProps> = ({ article }) => {
             className="block"
           >
             <h3
-              className={`text-base sm:text-lg font-bold tracking-tight leading-snug mb-2 group-hover:text-[#00A859] transition-colors line-clamp-2 ${
+              className={`text-sm sm:text-base md:text-lg font-bold tracking-tight leading-snug mb-1.5 sm:mb-2 group-hover:text-[#00A859] transition-colors line-clamp-2 ${
                 isRead
                   ? 'text-slate-400 dark:text-slate-500 font-medium'
                   : 'text-slate-900 dark:text-slate-100'
@@ -47,47 +47,47 @@ export const ArticleItem: React.FC<ArticleItemProps> = ({ article }) => {
             </h3>
 
             {article.description && (
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-3">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-2 sm:mb-3">
                 {article.description}
               </p>
             )}
           </a>
 
           {/* Metadata Row */}
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <div className="flex items-center gap-2 font-medium">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 gap-1 pt-0.5">
+            <div className="flex items-center gap-1.5 sm:gap-2 font-medium min-w-0 truncate">
+              <span className="font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[100px] xs:max-w-[130px] sm:max-w-none">
                 {article.sourceName}
               </span>
-              <span aria-hidden="true">·</span>
-              <time>{formatRelativeTimeVi(article.pubDate)}</time>
-              <span aria-hidden="true" className="hidden sm:inline">·</span>
-              <span className="hidden sm:inline text-slate-400 dark:text-slate-500">
+              <span aria-hidden="true" className="shrink-0 text-slate-300 dark:text-slate-600">·</span>
+              <time className="shrink-0">{formatRelativeTimeVi(article.pubDate)}</time>
+              <span aria-hidden="true" className="hidden sm:inline text-slate-300 dark:text-slate-600">·</span>
+              <span className="hidden sm:inline text-slate-400 dark:text-slate-500 truncate">
                 {article.categoryName}
               </span>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
               <button
                 onClick={handleBookmark}
-                className={`p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
+                className={`p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95 ${
                   isBookmarked ? 'text-[#00A859]' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                 }`}
                 title={isBookmarked ? 'Bỏ lưu' : 'Lưu đọc sau'}
                 aria-label="Lưu bài viết"
               >
-                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                <Bookmark className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isBookmarked ? 'fill-current' : ''}`} />
               </button>
               <a
                 href={article.link}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={handleClick}
-                className="p-1.5 rounded-md text-slate-400 hover:text-[#00A859] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-1.5 sm:p-2 rounded-lg text-slate-400 hover:text-[#00A859] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
                 title="Mở link gốc"
                 aria-label="Mở link gốc"
               >
-                <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </a>
             </div>
           </div>
@@ -99,9 +99,9 @@ export const ArticleItem: React.FC<ArticleItemProps> = ({ article }) => {
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleClick}
-          className="shrink-0 block"
+          className="shrink-0 block self-start"
         >
-          <div className="w-24 h-24 sm:w-28 sm:h-24 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 relative">
+          <div className="w-20 h-20 sm:w-28 sm:h-24 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 relative">
             {!imageError && article.thumbnail ? (
               <img
                 src={article.thumbnail}

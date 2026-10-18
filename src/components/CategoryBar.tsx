@@ -29,7 +29,7 @@ export const CategoryBar: React.FC<CategoryBarProps> = ({ selectedCategory, onSe
 
   return (
     <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative flex items-center">
+      <div className="w-full px-2 sm:px-6 lg:px-8 xl:px-10 relative flex items-center">
         {/* Left scroll button for desktop */}
         <button
           onClick={() => handleScroll('left')}

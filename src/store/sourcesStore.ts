@@ -52,9 +52,13 @@ function getInitialSources(): SourceItem[] {
         const merged: SourceItem[] = defaults.map((def) => {
           const existing = savedMap.get(def.id);
           if (existing) {
+            const isUserCustomizedUrl =
+              existing.feed_url &&
+              existing.defaultFeedUrl &&
+              existing.feed_url !== existing.defaultFeedUrl;
             return {
               ...def,
-              feed_url: existing.feed_url || def.feed_url,
+              feed_url: isUserCustomizedUrl ? existing.feed_url : def.feed_url,
               enabled: existing.enabled !== undefined ? existing.enabled : def.enabled,
               isCustom: false,
             };
