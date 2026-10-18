@@ -1,0 +1,6 @@
+{
+  "name": "TinTổngHợp - Báo Mới Tin Tức Việt Nam",
+  "description": "Ứng dụng web đọc báo tổng hợp tin tức tiếng Việt từ nhiều nguồn báo điện tử uy tín qua RSS theo ngày, chuyên mục và đầu báo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

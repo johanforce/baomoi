@@ -1,0 +1,104 @@
+import React, { useState } from 'react';
+import { Bookmark, ExternalLink } from 'lucide-react';
+import { sourcesStore, useSourcesStore } from '../store/sourcesStore';
+import { Article } from '../types';
+import { formatRelativeTimeVi } from '../utils/date';
+
+interface FeaturedArticleProps {
+  article: Article;
+}
+
+export const FeaturedArticle: React.FC<FeaturedArticleProps> = ({ article }) => {
+  const { readArticleIds, bookmarks } = useSourcesStore();
+  const isRead = readArticleIds.has(article.id);
+  const isBookmarked = bookmarks.some((b) => b.id === article.id);
+  const [imageError, setImageError] = useState(false);
+
+  const handleClick = () => {
+    sourcesStore.markArticleRead(article.id);
+  };
+
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    sourcesStore.toggleBookmark(article);
+  };
+
+  return (
+    <article className="group bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200/90 dark:border-slate-800 transition-all hover:border-[#00A859]/50 shadow-xs">
+      <a
+        href={article.link}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={handleClick}
+        className="block"
+      >
+        {/* Large Image Container with 16:9 ratio */}
+        <div className="relative aspect-[16/9] w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+          {!imageError && article.thumbnail ? (
+            <img
+              src={article.thumbnail}
+              alt={article.title}
+              onError={() => setImageError(true)}
+              loading="eager"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-900/10 via-slate-100 to-slate-200 dark:from-emerald-950/40 dark:via-slate-800 dark:to-slate-900 p-6 text-center">
+              <span className="text-3xl font-extrabold text-[#00A859]/30 mb-2">TinTổngHợp</span>
+              <span className="text-xs text-slate-500">{article.sourceName}</span>
+            </div>
+          )}
+
+          {/* Source badge overlay */}
+          <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-xs text-white text-xs font-semibold px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5">
+            <span>{article.sourceName}</span>
+          </div>
+
+          {/* Bookmark button */}
+          <button
+            onClick={handleBookmark}
+            className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-xs transition-all ${
+              isBookmarked
+                ? 'bg-[#00A859] text-white shadow-md'
+                : 'bg-black/50 text-white/90 hover:bg-black/80 hover:text-white'
+            }`}
+            title={isBookmarked ? 'Bỏ lưu' : 'Lưu đọc sau'}
+            aria-label="Lưu bài viết"
+          >
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-5">
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">
+            <span className="text-[#00A859] font-semibold">{article.categoryName}</span>
+            <span aria-hidden="true">·</span>
+            <time>{formatRelativeTimeVi(article.pubDate)}</time>
+          </div>
+
+          <h2
+            className={`text-xl sm:text-2xl font-bold tracking-tight mb-2.5 group-hover:text-[#00A859] transition-colors leading-snug line-clamp-2 ${
+              isRead ? 'text-slate-500 dark:text-slate-400 font-normal' : 'text-slate-900 dark:text-white'
+            }`}
+          >
+            {article.title}
+          </h2>
+
+          <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed mb-4">
+            {article.description}
+          </p>
+
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+            <span className="font-semibold text-slate-700 dark:text-slate-300">{article.sourceName}</span>
+            <span className="inline-flex items-center gap-1 text-[#00A859] font-medium group-hover:underline">
+              Đọc bản gốc <ExternalLink className="w-3.5 h-3.5" />
+            </span>
+          </div>
+        </div>
+      </a>
+    </article>
+  );
+};
