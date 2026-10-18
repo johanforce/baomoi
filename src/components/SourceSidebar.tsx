@@ -156,13 +156,31 @@ export const SourceSidebar: React.FC<SourceSidebarProps> = ({
       {/* 2. Newspaper Outlets Filter */}
       <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Trang báo ({outletGroups.length})
-            </label>
-            <span className="text-[11px] text-slate-400 block font-normal">
-              {categorySources.length} kênh RSS
-            </span>
+          <div className="flex items-center gap-2.5">
+            <input
+              type="checkbox"
+              checked={isAllSelected}
+              ref={(el) => {
+                if (el) {
+                  const someSelected = selectedSourceIds.length > 0 && !isAllSelected;
+                  el.indeterminate = someSelected;
+                }
+              }}
+              onChange={handleToggleAll}
+              className="w-4 h-4 rounded text-[#00A859] focus:ring-[#00A859] border-slate-300 dark:border-slate-600 dark:bg-slate-700 cursor-pointer shrink-0"
+              title="Chọn / Bỏ chọn tất cả trang báo"
+            />
+            <div>
+              <label
+                onClick={handleToggleAll}
+                className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 cursor-pointer select-none"
+              >
+                Trang báo ({outletGroups.length})
+              </label>
+              <span className="text-[11px] text-slate-400 block font-normal">
+                {categorySources.length} kênh RSS
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -176,7 +194,7 @@ export const SourceSidebar: React.FC<SourceSidebarProps> = ({
             </button>
             <button
               onClick={handleToggleAll}
-              className="text-xs font-semibold text-[#00A859] hover:underline"
+              className="text-xs font-semibold text-[#00A859] hover:underline cursor-pointer"
             >
               {isAllSelected ? 'Bỏ chọn' : 'Tất cả'}
             </button>
@@ -247,7 +265,7 @@ export const SourceSidebar: React.FC<SourceSidebarProps> = ({
 
                       <span
                         onClick={() => handleToggleOutlet(group)}
-                        className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate select-none flex-1"
+                        className="text-sm font-semibold text-slate-800 dark:text-slate-200 select-none flex-1 break-words leading-snug"
                         title={group.name}
                       >
                         {group.name}

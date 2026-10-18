@@ -40,12 +40,6 @@ const PROXIES = [
     timeoutMs: 8000, // 8 giây
     buildUrl: (feedUrl: string) => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`,
   },
-  {
-    name: 'corsproxy.io',
-    type: 'raw' as const,
-    timeoutMs: 6000, // 6 giây
-    buildUrl: (feedUrl: string) => `https://corsproxy.io/?${encodeURIComponent(feedUrl)}`,
-  },
 ];
 
 /**
@@ -99,27 +93,49 @@ function sanitizeXmlEntities(xml: string): string {
   );
 }
 
+function cleanXmlString(raw: string): string {
+  if (!raw) return '';
+  let str = raw.replace(/^\uFEFF/, '').trim();
+  const xmlIdx = str.indexOf('<?xml');
+  const rssIdx = str.indexOf('<rss');
+  const feedIdx = str.indexOf('<feed');
+  const indices = [xmlIdx, rssIdx, feedIdx].filter((i) => i >= 0);
+  if (indices.length > 0) {
+    const startIdx = Math.min(...indices);
+    if (startIdx > 0) {
+      str = str.slice(startIdx);
+    }
+  }
+  return str;
+}
+
 /**
  * Parse XML từ RSS 2.0 hoặc Atom feed thành danh sách Article
  */
 function parseXmlFeed(xmlText: string, source: SourceItem, fetchedAtMs: number): Article[] {
   const parser = new DOMParser();
-  const cleanXml = sanitizeXmlEntities(xmlText);
+  const stripped = cleanXmlString(xmlText);
+  const cleanXml = sanitizeXmlEntities(stripped);
   let xmlDoc: Document = parser.parseFromString(cleanXml, 'text/xml');
 
   // Kiểm tra lỗi parse XML
   let parseError = xmlDoc.querySelector('parsererror');
   if (parseError) {
-    // Thử fallback sang HTML parser cực kỳ khoan dung với lỗi cú pháp XML
-    try {
-      const htmlDoc = parser.parseFromString(cleanXml, 'text/html');
-      const htmlItems = htmlDoc.querySelectorAll('item, entry');
-      if (htmlItems && htmlItems.length > 0) {
-        xmlDoc = htmlDoc;
-        parseError = null;
+    const directItems = xmlDoc.querySelectorAll('item, entry');
+    if (directItems && directItems.length > 0) {
+      parseError = null;
+    } else {
+      // Thử fallback sang HTML parser cực kỳ khoan dung với lỗi cú pháp XML
+      try {
+        const htmlDoc = parser.parseFromString(cleanXml, 'text/html');
+        const htmlItems = htmlDoc.querySelectorAll('item, entry');
+        if (htmlItems && htmlItems.length > 0) {
+          xmlDoc = htmlDoc;
+          parseError = null;
+        }
+      } catch {
+        // bỏ qua
       }
-    } catch {
-      // bỏ qua
     }
   }
 
@@ -397,8 +413,8 @@ export async function fetchFeed(source: SourceItem): Promise<FetchFeedResult> {
             error: serverError,
           });
 
-          // Nếu server trả upstreamStatus 404 hoặc 410 thì dừng luôn, không thử các proxy còn lại
-          if (upstreamStatus === 404 || upstreamStatus === 410) {
+          // Nếu server trả upstreamStatus 401, 403, 404 hoặc 410 thì dừng luôn, không thử các proxy còn lại
+          if ([401, 403, 404, 410].includes(upstreamStatus || 0)) {
             const latencyMs = Date.now() - startTime;
             return {
               status: 'error',
@@ -425,6 +441,9 @@ export async function fetchFeed(source: SourceItem): Promise<FetchFeedResult> {
         const text = await response.text();
         if (!text || text.trim().length === 0) {
           throw new Error('Dữ liệu trả về rỗng');
+        }
+        if (text.trim().startsWith('<!DOCTYPE html') || text.trim().startsWith('<html') || text.trim().startsWith('<!doctype html')) {
+          throw new Error('Máy chủ trả về trang HTML thay vì dữ liệu RSS/XML');
         }
         parsedArticles = parseXmlFeed(text, source, startTime);
       }

@@ -15,6 +15,7 @@ export const AiSummaryModal: React.FC<AiSummaryModalProps> = ({ isOpen, onClose 
   const [summaryMarkdown, setSummaryMarkdown] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<'gemini-3.1-flash-lite' | 'gemini-3.8-flash'>('gemini-3.1-flash-lite');
 
   // API Key state for client
   const [isKeyConfigured, setIsKeyConfigured] = useState(true);
@@ -69,7 +70,7 @@ export const AiSummaryModal: React.FC<AiSummaryModalProps> = ({ isOpen, onClose 
     }
   };
 
-  const handleGenerateSummary = async () => {
+  const handleGenerateSummary = async (overrideModel?: 'gemini-3.1-flash-lite' | 'gemini-3.8-flash') => {
     setIsLoading(true);
     setErrorMsg(null);
     try {
@@ -82,12 +83,15 @@ export const AiSummaryModal: React.FC<AiSummaryModalProps> = ({ isOpen, onClose 
         return;
       }
 
+      const modelToCall = overrideModel || selectedModel;
+
       const res = await fetch('/api/ai-summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           articles,
           dateStr: formatFriendlyDate(todayStr),
+          model: modelToCall,
         }),
       });
 
@@ -118,11 +122,11 @@ export const AiSummaryModal: React.FC<AiSummaryModalProps> = ({ isOpen, onClose 
 
   if (!isOpen) return null;
 
-  // Render markdown to HTML with target="_blank" on links
+  // Render markdown to HTML with target="_blank" on links and line break support
   const renderedHtml = summaryMarkdown
-    ? marked.parse(summaryMarkdown).toString().replace(
+    ? marked.parse(summaryMarkdown, { breaks: true, gfm: true }).toString().replace(
         /<a /g,
-        '<a target="_blank" rel="noopener noreferrer" class="text-[#00A859] font-semibold hover:underline decoration-2 underline-offset-2" '
+        '<a target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-0.5 text-[#00A859] hover:text-[#008a49] font-medium underline decoration-emerald-400 hover:decoration-2 underline-offset-2 transition-colors" '
       )
     : '';
 
@@ -139,7 +143,7 @@ export const AiSummaryModal: React.FC<AiSummaryModalProps> = ({ isOpen, onClose 
               <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 Bản Tin Tổng Hợp Ngày Bằng AI
                 <span className="text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-[#00A859] px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-                  Gemini AI
+                  {selectedModel === 'gemini-3.1-flash-lite' ? 'Gemini 3.1 Flash-Lite' : 'Gemini 3.8 Flash'}
                 </span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -229,7 +233,7 @@ export const AiSummaryModal: React.FC<AiSummaryModalProps> = ({ isOpen, onClose 
                   <Key className="w-3.5 h-3.5" /> Nhập API Key của khách
                 </button>
                 <button
-                  onClick={handleGenerateSummary}
+                  onClick={() => handleGenerateSummary()}
                   className="px-4 py-2 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" /> Thử lại
@@ -239,7 +243,16 @@ export const AiSummaryModal: React.FC<AiSummaryModalProps> = ({ isOpen, onClose 
           ) : (
             <div className="bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-200 dark:border-slate-800 p-5 sm:p-8 space-y-4">
               <div
-                className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed text-sm sm:text-base font-serif space-y-4 selection:bg-[#00A859]/20"
+                className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed text-sm sm:text-base font-serif space-y-4 selection:bg-[#00A859]/20
+                [&_h1]:text-2xl [&_h1]:font-black [&_h1]:text-slate-900 dark:[&_h1]:text-white [&_h1]:border-b [&_h1]:border-slate-200 dark:[&_h1]:border-slate-800 [&_h1]:pb-3 [&_h1]:mt-2 [&_h1]:mb-6
+                [&_h2]:text-lg sm:[&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-emerald-700 dark:[&_h2]:text-emerald-400 [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:border-b [&_h2]:border-emerald-100 dark:[&_h2]:border-emerald-900/40 [&_h2]:pb-2
+                [&_h3]:text-base sm:[&_h3]:text-lg [&_h3]:font-bold [&_h3]:text-slate-900 dark:[&_h3]:text-slate-100 [&_h3]:mt-6 [&_h3]:mb-2.5
+                [&_ul]:my-3.5 [&_ul]:pl-5 [&_ul]:space-y-3 [&_ul]:list-disc
+                [&_ol]:my-3.5 [&_ol]:pl-5 [&_ol]:space-y-3 [&_ol]:list-decimal
+                [&_li]:my-2 [&_li]:leading-relaxed
+                [&_p]:my-3 [&_p]:leading-relaxed
+                [&_strong]:text-slate-900 dark:[&_strong]:text-white [&_strong]:font-bold
+                [&_hr]:my-6 [&_hr]:border-slate-200 dark:[&_hr]:border-slate-800"
                 dangerouslySetInnerHTML={{ __html: renderedHtml }}
               />
             </div>
@@ -247,13 +260,35 @@ export const AiSummaryModal: React.FC<AiSummaryModalProps> = ({ isOpen, onClose 
         </div>
 
         {/* Footer actions */}
-        <div className="px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-slate-900/50">
-          <div className="text-xs text-slate-400">
-            {summaryMarkdown && !isLoading && 'Bản tin chi tiết hoàn tất · Click vào link nguồn để mở bài viết gốc'}
-          </div>
+        <div className="px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 bg-slate-50/50 dark:bg-slate-900/50">
           <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium hidden md:inline">Mô hình AI:</span>
+            <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+              <Bot className="w-3.5 h-3.5 text-[#00A859]" />
+              <select
+                value={selectedModel}
+                onChange={(e) => {
+                  const m = e.target.value as 'gemini-3.1-flash-lite' | 'gemini-3.8-flash';
+                  setSelectedModel(m);
+                  if (summaryMarkdown) {
+                    handleGenerateSummary(m);
+                  }
+                }}
+                disabled={isLoading}
+                className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
+              >
+                <option value="gemini-3.1-flash-lite" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+                  Gemini 3.1 Lite (Khuyên dùng - Nhanh)
+                </option>
+                <option value="gemini-3.8-flash" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+                  Gemini 3.8 Flash (Chi tiết cao)
+                </option>
+              </select>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button
-              onClick={handleGenerateSummary}
+              onClick={() => handleGenerateSummary()}
               disabled={isLoading}
               className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
