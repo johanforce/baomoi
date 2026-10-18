@@ -102,7 +102,7 @@ export const SourceRow: React.FC<SourceRowProps> = ({
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Left info: Status, Title, Category */}
-        <div className="flex items-start gap-3 min-w-0 lg:w-1/3">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
           {/* Toggle enable checkbox */}
           <div className="pt-0.5">
             <input
@@ -116,7 +116,7 @@ export const SourceRow: React.FC<SourceRowProps> = ({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-slate-900 dark:text-white text-sm sm:text-base truncate">
+              <span className="font-bold text-slate-900 dark:text-white text-sm sm:text-base break-words">
                 {source.title}
               </span>
               <StatusDot state={currentState} showLabel={true} />

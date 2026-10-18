@@ -15,6 +15,7 @@ import { ToastContainer } from './components/Toast';
 import { ErrorBanner } from './components/ErrorBanner';
 import { FilterBottomSheet } from './components/FilterBottomSheet';
 import { SavedArticlesView } from './components/SavedArticlesView';
+import { AiSummaryModal } from './components/AiSummaryModal';
 import { SourceManager } from './pages/SourceManager';
 import { useArticles } from './hooks/useArticles';
 import { useFeedHealth } from './hooks/useFeedHealth';
@@ -55,6 +56,7 @@ export default function App() {
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(initialParams.sources);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
+  const [isAiSummaryOpen, setIsAiSummaryOpen] = useState<boolean>(false);
   const [sourceManagerInitialFilter, setSourceManagerInitialFilter] = useState<
     'all' | 'error' | 'success' | 'idle'
   >('all');
@@ -172,6 +174,7 @@ export default function App() {
         onOpenBookmarks={() => setCurrentView((prev) => (prev === 'bookmarks' ? 'feed' : 'bookmarks'))}
         isBookmarksOpen={currentView === 'bookmarks'}
         onLogoClick={handleLogoClick}
+        onOpenAiSummary={() => setIsAiSummaryOpen(true)}
       />
 
       {/* Main Views */}
@@ -359,6 +362,9 @@ export default function App() {
         sourceCounts={sourceCounts}
         availableDates={storedDates}
       />
+
+      {/* AI Summary Modal */}
+      <AiSummaryModal isOpen={isAiSummaryOpen} onClose={() => setIsAiSummaryOpen(false)} />
 
       {/* Toast Alert System */}
       <ToastContainer />

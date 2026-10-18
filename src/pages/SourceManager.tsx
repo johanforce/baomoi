@@ -279,6 +279,30 @@ export const SourceManager: React.FC<SourceManagerProps> = ({
         </div>
       </div>
 
+      {/* News Source Filter Notice Banner */}
+      <div className="bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-start gap-2.5">
+          <CheckSquare className="w-5 h-5 text-[#00A859] shrink-0 mt-0.5" />
+          <div className="text-xs sm:text-sm text-emerald-900 dark:text-emerald-200 space-y-0.5">
+            <span className="font-bold">Bộ lọc nguồn tin tức (News Source Filter):</span> Tích chọn các báo để hiển thị tin tức từ báo đó trên dòng tin chung (Feed), bỏ tích để ẩn đi.
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+          <button
+            onClick={() => sourcesStore.toggleAllSources(true)}
+            className="px-3 py-1.5 bg-[#00A859] hover:bg-[#008f4c] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+          >
+            Hiển thị tất cả
+          </button>
+          <button
+            onClick={() => sourcesStore.toggleAllSources(false)}
+            className="px-3 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+          >
+            Ẩn tất cả
+          </button>
+        </div>
+      </div>
+
       {/* 2. Top Action Toolbar */}
       <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4">
         {/* Row 1: Major Reload Actions */}

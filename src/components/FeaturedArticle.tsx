@@ -48,8 +48,11 @@ export const FeaturedArticle: React.FC<FeaturedArticleProps> = ({ article }) => 
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-900/10 via-slate-100 to-slate-200 dark:from-emerald-950/40 dark:via-slate-800 dark:to-slate-900 p-4 sm:p-6 text-center">
               <img
-                src={catLogo}
+                src="/cat.jpg"
                 alt="Lều Báo"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = catLogo;
+                }}
                 className="w-14 h-14 rounded-full shadow-sm mb-2 object-cover opacity-85"
                 referrerPolicy="no-referrer"
               />

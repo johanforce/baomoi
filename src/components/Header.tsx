@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Rss, Bookmark, Sun, Moon, X } from 'lucide-react';
+import { Search, Rss, Bookmark, Sun, Moon, X, Sparkles } from 'lucide-react';
 import { useFeedHealth } from '../hooks/useFeedHealth';
 import { sourcesStore, useSourcesStore } from '../store/sourcesStore';
 import catLogo from '../assets/images/cat.jpg';
@@ -11,6 +11,7 @@ interface HeaderProps {
   onOpenBookmarks: () => void;
   isBookmarksOpen: boolean;
   onLogoClick: () => void;
+  onOpenAiSummary: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,6 +21,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenBookmarks,
   isBookmarksOpen,
   onLogoClick,
+  onOpenAiSummary,
 }) => {
   const { theme, bookmarks } = useSourcesStore();
   const { hasErrors, errorCount, allHealthy, loadingCount } = useFeedHealth();
@@ -34,8 +36,11 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <div className="relative w-9 h-9 rounded-full overflow-hidden shadow-xs ring-2 ring-[#00A859]/30 group-hover:ring-[#00A859] transition-all shrink-0 bg-slate-100 dark:bg-slate-800">
             <img
-              src={catLogo}
+              src="/cat.jpg"
               alt="Lều Báo"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = catLogo;
+              }}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform"
               referrerPolicy="no-referrer"
             />
@@ -76,6 +81,16 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Zone 3: Actions */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* Nút Bản tin AI */}
+          <button
+            onClick={onOpenAiSummary}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold bg-gradient-to-r from-emerald-600 to-[#00A859] hover:from-emerald-700 hover:to-[#008f4c] text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+            title="Bản tin tổng hợp ngày bằng AI"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline">Bản tin AI</span>
+          </button>
+
           {/* Nút Đã lưu */}
           <button
             onClick={onOpenBookmarks}
