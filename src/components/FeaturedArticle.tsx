@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Bookmark, ExternalLink } from 'lucide-react';
+import { Bookmark, ExternalLink, Headphones } from 'lucide-react';
 import { sourcesStore, useSourcesStore } from '../store/sourcesStore';
 import { Article } from '../types';
 import { formatRelativeTimeVi } from '../utils/date';
+import { decodeHtmlEntities } from '../utils/text';
 import catLogo from '../assets/images/cat.jpg';
 
 interface FeaturedArticleProps {
@@ -23,6 +24,12 @@ export const FeaturedArticle: React.FC<FeaturedArticleProps> = ({ article }) => 
     e.preventDefault();
     e.stopPropagation();
     sourcesStore.toggleBookmark(article);
+  };
+
+  const handleOpenAudio = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    sourcesStore.openAudio(article);
   };
 
   return (
@@ -79,6 +86,17 @@ export const FeaturedArticle: React.FC<FeaturedArticleProps> = ({ article }) => 
           >
             <Bookmark className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isBookmarked ? 'fill-current' : ''}`} />
           </button>
+
+          {/* Quick Audio Bot Button on image */}
+          <button
+            type="button"
+            onClick={handleOpenAudio}
+            className="absolute bottom-2.5 right-2.5 sm:bottom-3 sm:right-3 px-3 py-1.5 rounded-full bg-black/65 hover:bg-emerald-600 text-white backdrop-blur-md transition-all text-xs font-bold flex items-center gap-1.5 shadow-md cursor-pointer hover:scale-105 active:scale-95"
+            title="Nghe bot đọc bài báo này"
+          >
+            <Headphones className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Nghe đọc</span>
+          </button>
         </div>
 
         {/* Content */}
@@ -94,18 +112,29 @@ export const FeaturedArticle: React.FC<FeaturedArticleProps> = ({ article }) => 
               isRead ? 'text-slate-500 dark:text-slate-400 font-normal' : 'text-slate-900 dark:text-white'
             }`}
           >
-            {article.title}
+            {decodeHtmlEntities(article.title)}
           </h2>
 
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed mb-3 sm:mb-4">
-            {article.description}
+            {decodeHtmlEntities(article.description)}
           </p>
 
           <div className="flex items-center justify-between pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
             <span className="font-semibold text-slate-700 dark:text-slate-300">{article.sourceName}</span>
-            <span className="inline-flex items-center gap-1 text-[#00A859] font-medium group-hover:underline">
-              Đọc bản gốc <ExternalLink className="w-3.5 h-3.5" />
-            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleOpenAudio}
+                className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-semibold cursor-pointer"
+                title="Nghe bot đọc bài báo này"
+              >
+                <Headphones className="w-3.5 h-3.5" />
+                <span>Bot đọc báo</span>
+              </button>
+              <span className="inline-flex items-center gap-1 text-[#00A859] font-medium group-hover:underline">
+                Đọc bản gốc <ExternalLink className="w-3.5 h-3.5" />
+              </span>
+            </div>
           </div>
         </div>
       </a>

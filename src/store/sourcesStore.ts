@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { buildDefaultSources } from '../data/defaultSources';
-import { cleanupOldArticles, saveArticlesToDB, migrateLegacyCategoriesInDB } from '../services/db';
+import { cleanupOldArticles, saveArticlesToDB, migrateLegacyCategoriesInDB, migrateHtmlEntitiesInDB } from '../services/db';
 import { fetchFeed, fetchFeedsConcurrently } from '../services/rssService';
 import { Article, FeedStatus, SourceItem, ToastMessage } from '../types';
 import { generateHash } from '../utils/hash';
+import { decodeHtmlEntities } from '../utils/text';
 import { isValidFeedUrl } from '../utils/url';
 
 const STORAGE_SOURCES_KEY = 'sources_override_v4'; // bumped to v4 for 11 categories
@@ -12,10 +13,11 @@ const STORAGE_READ_IDS_KEY = 'tintonghop_read_ids';
 const STORAGE_BOOKMARKS_KEY = 'tintonghop_bookmarks';
 const STORAGE_THEME_KEY = 'tintonghop_theme';
 
-// Chạy chuẩn hóa category cho dữ liệu đã lưu trong IndexedDB
+// Chạy chuẩn hóa category và giải mã thực thể HTML cho dữ liệu đã lưu trong IndexedDB
 if (typeof window !== 'undefined') {
   setTimeout(() => {
     migrateLegacyCategoriesInDB();
+    migrateHtmlEntitiesInDB();
   }, 300);
 }
 
@@ -42,6 +44,8 @@ export interface StoreState {
   readArticleIds: Set<string>;
   bookmarks: Article[];
   theme: 'light' | 'dark';
+  activeAudioArticle: Article | null;
+  isAudioModalOpen: boolean;
 }
 
 // Khởi tạo trạng thái ban đầu: Hợp nhất thông minh giữa defaultSources và LocalStorage
@@ -120,7 +124,14 @@ function getInitialBookmarks(): Article[] {
   try {
     const saved = localStorage.getItem(STORAGE_BOOKMARKS_KEY);
     if (saved) {
-      return JSON.parse(saved);
+      const list = JSON.parse(saved);
+      if (Array.isArray(list)) {
+        return list.map((b: Article) => ({
+          ...b,
+          title: decodeHtmlEntities(b.title),
+          description: decodeHtmlEntities(b.description),
+        }));
+      }
     }
   } catch {
     // ignore
@@ -172,6 +183,8 @@ let state: StoreState = {
   readArticleIds: getInitialReadIds(),
   bookmarks: getInitialBookmarks(),
   theme: getInitialTheme(),
+  activeAudioArticle: null,
+  isAudioModalOpen: false,
 };
 
 // Áp dụng theme ngay khi nạp module
@@ -281,7 +294,12 @@ export const sourcesStore = {
     notify();
   },
 
-  toggleBookmark(article: Article) {
+  toggleBookmark(rawArticle: Article) {
+    const article: Article = {
+      ...rawArticle,
+      title: decodeHtmlEntities(rawArticle.title),
+      description: decodeHtmlEntities(rawArticle.description),
+    };
     const exists = state.bookmarks.some((b) => b.id === article.id);
     let newBookmarks: Article[];
     if (exists) {
@@ -293,6 +311,53 @@ export const sourcesStore = {
     }
     state = { ...state, bookmarks: newBookmarks };
     persistBookmarks();
+    notify();
+  },
+
+  openAudio(rawArticle: Article) {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // ignore
+      }
+    }
+
+    const article: Article = {
+      ...rawArticle,
+      title: decodeHtmlEntities(rawArticle.title),
+      description: decodeHtmlEntities(rawArticle.description),
+    };
+    state = {
+      ...state,
+      activeAudioArticle: article,
+      isAudioModalOpen: true,
+    };
+    notify();
+  },
+
+  closeAudio() {
+    state = {
+      ...state,
+      isAudioModalOpen: false,
+    };
+    notify();
+  },
+
+  setAudioModalOpen(open: boolean) {
+    state = {
+      ...state,
+      isAudioModalOpen: open,
+    };
+    notify();
+  },
+
+  stopAudio() {
+    state = {
+      ...state,
+      activeAudioArticle: null,
+      isAudioModalOpen: false,
+    };
     notify();
   },
 

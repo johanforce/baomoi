@@ -1,31 +1,59 @@
+import { decode as heDecode } from 'he';
+
 /**
  * Tiện ích xử lý văn bản tiếng Việt và chuỗi HTML
  */
 
 /**
- * Loại bỏ toàn bộ thẻ HTML và giải mã các thực thể HTML phổ biến
+ * Giải mã đầy đủ các thực thể HTML (kể cả &aacute;, &ograve;, &#039;, &hellip;, hoặc bị double-encoded)
+ */
+export function decodeHtmlEntities(input: string): string {
+  if (!input || typeof input !== 'string') return '';
+  if (!input.includes('&')) return input;
+
+  let str = input;
+  // Giải mã tối đa 2 lần để xử lý các chuỗi bị escape nhiều lớp (ví dụ &amp;aacute; -> &aacute; -> á)
+  for (let i = 0; i < 2; i++) {
+    if (!str.includes('&')) break;
+    try {
+      const decoded = heDecode(str);
+      if (decoded === str) break;
+      str = decoded;
+    } catch {
+      break;
+    }
+  }
+
+  // Fallback nếu còn sót thực thể HTML trong môi trường trình duyệt
+  if (typeof document !== 'undefined' && str.includes('&')) {
+    try {
+      const txt = document.createElement('textarea');
+      txt.innerHTML = str;
+      if (txt.value && txt.value !== str) {
+        str = txt.value;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return str;
+}
+
+/**
+ * Loại bỏ toàn bộ thẻ HTML và giải mã đầy đủ các thực thể HTML
  */
 export function stripHtml(html: string): string {
   if (!html) return '';
 
-  // Chuyển đối tượng HTML cơ bản
   let text = html
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replace(/<[^>]+>/g, ' ');
 
-  return text;
+  text = decodeHtmlEntities(text);
+  return text.replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -70,7 +98,7 @@ export function removeVietnameseTones(str: string): string {
  * Chuẩn hóa tiêu đề để so sánh trùng lặp
  */
 export function normalizeTitleForDedupe(title: string): string {
-  return removeVietnameseTones(title)
+  return removeVietnameseTones(decodeHtmlEntities(title))
     .replace(/[^\w\s]/g, '')
     .replace(/\s+/g, ' ')
     .trim();

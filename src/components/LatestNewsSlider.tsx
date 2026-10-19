@@ -8,9 +8,11 @@ import {
   Clock,
   Pause,
   Play,
+  Headphones,
 } from 'lucide-react';
 import { Article } from '../types';
 import { formatRelativeTimeVi } from '../utils/date';
+import { decodeHtmlEntities } from '../utils/text';
 import { sourcesStore, useSourcesStore } from '../store/sourcesStore';
 import catLogo from '../assets/images/cat.jpg';
 
@@ -41,6 +43,7 @@ export const LatestNewsSlider: React.FC<LatestNewsSliderProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const isSwiping = useRef(false);
+  const dragActive = useRef(false);
   const dragStartX = useRef(0);
   const dragStartY = useRef(0);
   const currentDragOffset = useRef(0);
@@ -91,52 +94,58 @@ export const LatestNewsSlider: React.FC<LatestNewsSliderProps> = ({
   const handlePointerDown = (e: React.PointerEvent) => {
     // Only handle primary button for mouse or any touch/pen
     if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if ((e.target as HTMLElement).closest('button, .no-drag')) return;
 
-    setIsDragging(true);
+    dragActive.current = true;
     isSwiping.current = false;
     dragStartX.current = e.clientX;
     dragStartY.current = e.clientY;
     currentDragOffset.current = 0;
     setDragOffset(0);
-
-    try {
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    } catch {
-      // ignore
-    }
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) return;
+    if (!dragActive.current) return;
 
     const deltaX = e.clientX - dragStartX.current;
     const deltaY = e.clientY - dragStartY.current;
 
     // If initial vertical scroll detected, release to let page scroll naturally
     if (!isSwiping.current && Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 8) {
+      dragActive.current = false;
       setIsDragging(false);
       setDragOffset(0);
       currentDragOffset.current = 0;
       return;
     }
 
-    if (Math.abs(deltaX) > 6) {
-      isSwiping.current = true;
-    }
+    // Only confirm horizontal swiping when moved more than 8px
+    if (Math.abs(deltaX) > 8) {
+      if (!isSwiping.current) {
+        isSwiping.current = true;
+        setIsDragging(true);
+        try {
+          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
+      }
 
-    // Elastic damping when pulling past the boundaries
-    let effectiveDelta = deltaX;
-    if ((currentIndex === 0 && deltaX > 0) || (currentIndex === total - 1 && deltaX < 0)) {
-      effectiveDelta = deltaX * 0.35;
-    }
+      // Elastic damping when pulling past the boundaries
+      let effectiveDelta = deltaX;
+      if ((currentIndex === 0 && deltaX > 0) || (currentIndex === total - 1 && deltaX < 0)) {
+        effectiveDelta = deltaX * 0.35;
+      }
 
-    currentDragOffset.current = effectiveDelta;
-    setDragOffset(effectiveDelta);
+      currentDragOffset.current = effectiveDelta;
+      setDragOffset(effectiveDelta);
+    }
   };
 
   const finishDrag = (e: React.PointerEvent) => {
-    if (!isDragging) return;
-    setIsDragging(false);
+    if (!dragActive.current) return;
+    dragActive.current = false;
+    const wasSwiping = isSwiping.current;
 
     try {
       (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
@@ -145,20 +154,23 @@ export const LatestNewsSlider: React.FC<LatestNewsSliderProps> = ({
     }
 
     const finalOffset = currentDragOffset.current;
+    setIsDragging(false);
     setDragOffset(0);
     currentDragOffset.current = 0;
 
     // Threshold of 35px for slide change
-    if (finalOffset < -35) {
-      handleNext();
-    } else if (finalOffset > 35) {
-      handlePrev();
-    }
+    if (wasSwiping) {
+      if (finalOffset < -35) {
+        handleNext();
+      } else if (finalOffset > 35) {
+        handlePrev();
+      }
 
-    // Reset swiping flag after short timeout so click doesn't trigger
-    setTimeout(() => {
-      isSwiping.current = false;
-    }, 50);
+      // Reset swiping flag after short timeout so click doesn't trigger
+      setTimeout(() => {
+        isSwiping.current = false;
+      }, 120);
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -169,12 +181,14 @@ export const LatestNewsSlider: React.FC<LatestNewsSliderProps> = ({
     finishDrag(e);
   };
 
-  const handleSlideClick = (article: Article) => {
-    // If the user was swiping or dragging, ignore the click
-    if (isSwiping.current) return;
+  const handleSlideLinkClick = (e: React.MouseEvent, article: Article) => {
+    // If the user was swiping or dragging, ignore the click to avoid accidental navigation
+    if (isSwiping.current) {
+      e.preventDefault();
+      return;
+    }
 
     sourcesStore.markArticleRead(article.id);
-    window.open(article.link, '_blank', 'noopener,noreferrer');
   };
 
   const handleBookmarkClick = (e: React.MouseEvent, article: Article) => {
@@ -183,9 +197,15 @@ export const LatestNewsSlider: React.FC<LatestNewsSliderProps> = ({
     sourcesStore.toggleBookmark(article);
   };
 
+  const handleAudioClick = (e: React.MouseEvent, article: Article) => {
+    e.preventDefault();
+    e.stopPropagation();
+    sourcesStore.openAudio(article);
+  };
+
   return (
     <div
-      className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200/90 dark:border-slate-800 shadow-sm transition-all mb-4 select-none touch-pan-y"
+      className="group/slider bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200/90 dark:border-slate-800 shadow-sm transition-all mb-4 select-none touch-pan-y"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -231,10 +251,13 @@ export const LatestNewsSlider: React.FC<LatestNewsSliderProps> = ({
             const hasImageError = imageErrorMap[article.id];
 
             return (
-              <div
+              <a
                 key={article.id}
-                onClick={() => handleSlideClick(article)}
-                className="w-full shrink-0 relative aspect-[16/9] sm:aspect-[21/9] bg-slate-100 dark:bg-slate-800 overflow-hidden group cursor-pointer"
+                href={article.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => handleSlideLinkClick(e, article)}
+                className="w-full shrink-0 relative aspect-[16/9] sm:aspect-[21/9] bg-slate-100 dark:bg-slate-800 overflow-hidden group cursor-pointer block"
               >
                 {/* Image layer: draggable=false, pointer-events-none ensures swiping on image works smoothly */}
                 {!hasImageError && article.thumbnail ? (
@@ -281,20 +304,35 @@ export const LatestNewsSlider: React.FC<LatestNewsSliderProps> = ({
                   </span>
                 </div>
 
-                {/* Bookmark Button */}
-                <button
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => handleBookmarkClick(e, article)}
-                  className={`absolute top-3 right-3 sm:top-4 sm:right-4 p-2 rounded-full backdrop-blur-md transition-all z-10 cursor-pointer ${
-                    isBookmarked
-                      ? 'bg-[#00A859] text-white shadow-lg'
-                      : 'bg-black/50 text-white/90 hover:bg-black/80 hover:text-white'
-                  }`}
-                  title={isBookmarked ? 'Bỏ lưu bài viết' : 'Lưu đọc sau'}
-                  aria-label="Lưu bài viết"
-                >
-                  <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
-                </button>
+                {/* Top-right Actions: Audio Bot & Bookmark */}
+                <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-1.5 z-20">
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => handleAudioClick(e, article)}
+                    className="no-drag p-2 sm:px-3 sm:py-1.5 rounded-full backdrop-blur-md transition-all cursor-pointer bg-black/55 text-emerald-300 hover:bg-emerald-600 hover:text-white flex items-center gap-1.5 text-xs font-bold shadow-lg active:scale-95 border border-white/10"
+                    title="Nghe bot đọc bài báo này"
+                    aria-label="Bot đọc báo"
+                  >
+                    <Headphones className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Nghe đọc</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => handleBookmarkClick(e, article)}
+                    className={`no-drag p-2 rounded-full backdrop-blur-md transition-all cursor-pointer ${
+                      isBookmarked
+                        ? 'bg-[#00A859] text-white shadow-lg'
+                        : 'bg-black/50 text-white/90 hover:bg-black/80 hover:text-white'
+                    }`}
+                    title={isBookmarked ? 'Bỏ lưu bài viết' : 'Lưu đọc sau'}
+                    aria-label="Lưu bài viết"
+                  >
+                    <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                  </button>
+                </div>
 
                 {/* Bottom Content overlay */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white pointer-events-none">
@@ -310,19 +348,76 @@ export const LatestNewsSlider: React.FC<LatestNewsSliderProps> = ({
                       isRead ? 'opacity-85 font-normal' : ''
                     }`}
                   >
-                    {article.title}
+                    {decodeHtmlEntities(article.title)}
                   </h2>
 
                   {article.description && (
                     <p className="hidden sm:block text-xs sm:text-sm text-slate-200/90 line-clamp-2 mt-1.5 leading-relaxed drop-shadow-xs max-w-3xl">
-                      {article.description.replace(/<[^>]*>/g, '').trim()}
+                      {decodeHtmlEntities(article.description.replace(/<[^>]*>/g, '').trim())}
                     </p>
                   )}
+
+                  <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/10 text-[11px] sm:text-xs text-white/80">
+                    <span className="font-semibold text-emerald-300">
+                      {article.sourceName}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={(e) => handleAudioClick(e, article)}
+                        className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-semibold cursor-pointer pointer-events-auto"
+                        title="Nghe bot đọc bài báo này"
+                      >
+                        <Headphones className="w-3.5 h-3.5" />
+                        <span>Nghe bot đọc</span>
+                      </button>
+                      <span className="inline-flex items-center gap-1 text-emerald-400 font-medium group-hover:text-emerald-300 group-hover:underline">
+                        Đọc bài gốc <ExternalLink className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </a>
             );
           })}
         </div>
+
+        {/* 2b. Transparent Navigation Buttons (Back & Next - Visible on hover/focus) */}
+        {total > 1 && (
+          <>
+            {/* Back Button (Left) */}
+            <button
+              type="button"
+              className="no-drag absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 rounded-full bg-black/25 hover:bg-black/60 text-white/90 hover:text-white backdrop-blur-md border border-white/25 hover:border-white/50 shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 z-20 cursor-pointer group/btn opacity-0 -translate-x-2 pointer-events-none group-hover/slider:opacity-100 group-hover/slider:translate-x-0 group-hover/slider:pointer-events-auto group-focus-within/slider:opacity-100 group-focus-within/slider:translate-x-0 group-focus-within/slider:pointer-events-auto"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handlePrev();
+              }}
+              title="Bài trước"
+              aria-label="Bài trước"
+            >
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover/btn:-translate-x-0.5" />
+            </button>
+
+            {/* Next Button (Right) */}
+            <button
+              type="button"
+              className="no-drag absolute right-2.5 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 rounded-full bg-black/25 hover:bg-black/60 text-white/90 hover:text-white backdrop-blur-md border border-white/25 hover:border-white/50 shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 z-20 cursor-pointer group/btn opacity-0 translate-x-2 pointer-events-none group-hover/slider:opacity-100 group-hover/slider:translate-x-0 group-hover/slider:pointer-events-auto group-focus-within/slider:opacity-100 group-focus-within/slider:translate-x-0 group-focus-within/slider:pointer-events-auto"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleNext();
+              }}
+              title="Bài tiếp theo"
+              aria-label="Bài tiếp theo"
+            >
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover/btn:translate-x-0.5" />
+            </button>
+          </>
+        )}
       </div>
 
       {/* 3. Bottom Dots Indicator Bar */}
@@ -357,19 +452,6 @@ export const LatestNewsSlider: React.FC<LatestNewsSliderProps> = ({
               </button>
             );
           })}
-        </div>
-
-        <div className="flex items-center gap-3 text-xs text-slate-400 shrink-0">
-          <a
-            href={currentArticle.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => sourcesStore.markArticleRead(currentArticle.id)}
-            className="inline-flex items-center gap-1 text-[#00A859] hover:underline font-semibold"
-          >
-            <span>Đọc tin gốc</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
         </div>
       </div>
     </div>

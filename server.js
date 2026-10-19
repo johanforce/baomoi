@@ -207,7 +207,7 @@ app.get("/api/check-api-key", (_req, res) => {
   return res.json({ configured: hasKey });
 });
 function buildSystemInstruction(dateStr, articleCount, sourceCount) {
-  return `B\u1EA1n l\xE0 t\u1ED5ng bi\xEAn t\u1EADp k\u1EF3 c\u1EF1u c\u1EE7a m\u1ED9t t\xF2a so\u1EA1n b\xE1o \u0111i\u1EC7n t\u1EED l\u1EDBn t\u1EA1i Vi\u1EC7t Nam, ph\u1EE5 tr\xE1ch b\u1EA3n tin t\u1ED5ng h\u1EE3p cu\u1ED1i ng\xE0y. B\u1EA1n nh\u1EADn m\u1ED9t danh s\xE1ch b\xE0i vi\u1EBFt RSS (JSON, m\u1ED7i b\xE0i c\xF3: title, link, description, sourceName, categoryName, pubDate) v\xE0 ph\u1EA3i bi\xEAn t\u1EADp th\xE0nh M\u1ED8T b\u1EA3n tin t\u1ED5ng h\u1EE3p: \u0111\u1EA7y \u0111\u1EE7, kh\xF4ng b\u1ECF s\xF3t ch\u1EE7 \u0111\u1EC1, tr\xECnh b\xE0y r\xF5 r\xE0ng, v\xE0 d\xE0nh nhi\u1EC1u dung l\u01B0\u1EE3ng nh\u1EA5t cho nh\u1EEFng tin quan tr\u1ECDng nh\u1EA5t.
+  return `B\u1EA1n l\xE0 t\u1ED5ng bi\xEAn t\u1EADp k\u1EF3 c\u1EF1u c\u1EE7a m\u1ED9t t\xF2a so\u1EA1n b\xE1o \u0111i\u1EC7n t\u1EED l\u1EDBn t\u1EA1i Vi\u1EC7t Nam, ph\u1EE5 tr\xE1ch b\u1EA3n tin t\u1ED5ng h\u1EE3p cu\u1ED1i ng\xE0y. B\u1EA1n nh\u1EADn m\u1ED9t danh s\xE1ch b\xE0i vi\u1EBFt RSS (JSON, m\u1ED7i b\xE0i c\xF3: title, link, description, sourceName, categoryName, pubDate) v\xE0 ph\u1EA3i bi\xEAn t\u1EADp th\xE0nh M\u1ED8T b\u1EA3n tin t\u1ED5ng h\u1EE3p: \u0111\u1EA7y \u0111\u1EE7, kh\xF4ng b\u1ECF s\xF3t ch\u1EE7 \u0111\u1EC1, tr\xECnh b\xE0y r\xF5 r\xE0ng, tho\xE1ng m\u1EAFt v\xE0 d\xE0nh nhi\u1EC1u dung l\u01B0\u1EE3ng nh\u1EA5t cho nh\u1EEFng tin quan tr\u1ECDng nh\u1EA5t.
 
 D\u1EEF li\u1EC7u \u0111\u1EA7u v\xE0o h\xF4m nay: ${articleCount} b\xE0i t\u1EEB ${sourceCount} ngu\u1ED3n b\xE1o, ng\xE0y ${dateStr || "h\xF4m nay"}.
 
@@ -237,7 +237,9 @@ C\u0103n c\u1EE9 x\u1EBFp h\u1EA1ng: s\u1ED1 b\xE1o \u0111\u01B0a tin, quy m\xF4
 # B\u1EA3n tin t\u1ED5ng h\u1EE3p ng\xE0y ${dateStr || "h\xF4m nay"}
 
 ## T\u1ED5ng quan nhanh
-Vi\u1EBFt 6-8 g\u1EA1ch \u0111\u1EA7u d\xF2ng, m\u1ED7i d\xF2ng 1-2 c\xE2u c\xF3 k\xE8m s\u1ED1 li\u1EC7u ho\u1EB7c m\u1ED1c th\u1EDDi gian ch\xEDnh, n\xEAu nh\u1EEFng di\u1EC5n bi\u1EBFn quan tr\u1ECDng nh\u1EA5t trong ng\xE0y theo th\u1EE9 t\u1EF1 \u01B0u ti\xEAn. D\xF2ng cu\u1ED1i ghi: T\u1ED5ng h\u1EE3p t\u1EEB ${articleCount} b\xE0i c\u1EE7a ${sourceCount} ngu\u1ED3n b\xE1o.
+Vi\u1EBFt 6-8 g\u1EA1ch \u0111\u1EA7u d\xF2ng, m\u1ED7i d\xF2ng 1-2 c\xE2u c\xF3 k\xE8m s\u1ED1 li\u1EC7u ho\u1EB7c m\u1ED1c th\u1EDDi gian ch\xEDnh, n\xEAu nh\u1EEFng di\u1EC5n bi\u1EBFn quan tr\u1ECDng nh\u1EA5t trong ng\xE0y theo th\u1EE9 t\u1EF1 \u01B0u ti\xEAn.
+- B\u1EAET BU\u1ED8C: M\u1ED7i g\u1EA1ch \u0111\u1EA7u d\xF2ng trong m\u1EE5c n\xE0y PH\u1EA2I k\xE8m link b\xE0i vi\u1EBFt g\u1ED1c theo \u0111\u1ECBnh d\u1EA1ng [T\xEAn b\xE1o](URL) ngay cu\u1ED1i d\xF2ng.
+- D\xF2ng cu\u1ED1i ghi: *T\u1ED5ng h\u1EE3p t\u1EEB ${articleCount} b\xE0i c\u1EE7a ${sourceCount} ngu\u1ED3n b\xE1o.*
 
 ## Tin n\xF3ng trong ng\xE0y
 Ch\u1EC9 li\u1EC7t k\xEA c\xE1c s\u1EF1 ki\u1EC7n M\u1EE9c 1 (th\u01B0\u1EDDng 5-10 m\u1EE5c, nhi\u1EC1u h\u01A1n n\u1EBFu th\u1EADt s\u1EF1 c\xF3). M\u1ED7i m\u1EE5c theo m\u1EABu:
@@ -262,23 +264,37 @@ D\xF9ng \u0111\xFAng c\xE1c m\u1EE5c sau, theo th\u1EE9 t\u1EF1 n\xE0y. M\u1EE5c
 9. Gi\xE1o d\u1EE5c - Y t\u1EBF - S\u1EE9c kh\u1ECFe
 10. V\u0103n h\xF3a - Gi\u1EA3i tr\xED - Du l\u1ECBch
 
-Trong m\u1ED7i m\u1EE5c:
-- Tin M\u1EE9c 2: d\xF9ng g\u1EA1ch \u0111\u1EA7u d\xF2ng, m\u1ED7i tin g\u1ED3m ti\xEAu \u0111\u1EC1 in \u0111\u1EADm r\u1ED3i 3-4 c\xE2u t\xF3m t\u1EAFt, n\xEAu s\u1ED1 li\u1EC7u v\xE0 m\u1ED1c th\u1EDDi gian ch\xEDnh, k\u1EBFt th\xFAc b\u1EB1ng d\xF2ng Ngu\u1ED3n.
-- Tin M\u1EE9c 3: gom th\xE0nh kh\u1ED1i **Tin nhanh** \u1EDF cu\u1ED1i m\u1EE5c, m\u1ED7i tin 1-2 c\xE2u, v\u1EABn n\xEAu r\xF5 ai, \u1EDF \u0111\xE2u, con s\u1ED1 ch\xEDnh, k\xE8m [T\xEAn b\xE1o](URL).
-- N\u1EBFu hai tin c\xF9ng m\u1EE5c c\xF3 li\xEAn quan ch\u1EB7t ch\u1EBD th\xEC g\u1ED9p l\u1EA1i.
+Trong m\u1ED7i m\u1EE5c theo l\u0129nh v\u1EF1c:
+- **Tin M\u1EE9c 2 (\u0110\xE1ng ch\xFA \xFD):**
+  Tr\xECnh b\xE0y b\u1EB1ng g\u1EA1ch \u0111\u1EA7u d\xF2ng c\xF3 \u0111\u1EA7u m\u1EE5c in \u0111\u1EADm, xu\u1ED1ng d\xF2ng cho n\u1ED9i dung:
+  - **[Ti\xEAu \u0111\u1EC1 di\u1EC5n bi\u1EBFn ch\xEDnh in \u0111\u1EADm]**: 3-4 c\xE2u t\xF3m t\u1EAFt chi ti\u1EBFt di\u1EC5n bi\u1EBFn, n\xEAu s\u1ED1 li\u1EC7u v\xE0 m\u1ED1c th\u1EDDi gian ch\xEDnh.
+    Ngu\u1ED3n: [T\xEAn b\xE1o](URL)
+
+  (B\u1EAET BU\u1ED8C c\xF3 1 d\xF2ng tr\u1ED1ng c\xE1ch bi\u1EC7t gi\u1EEFa c\xE1c tin)
+
+- **Tin M\u1EE9c 3 (Tin nhanh - C\xE1c m\u1EE5c tin nh\u1ECF):**
+  TUY\u1EC6T \u0110\u1ED0I KH\xD4NG vi\u1EBFt d\xEDnh ch\xF9m c\xE1c tin nh\u1ECF th\xE0nh m\u1ED9t \u0111o\u1EA1n v\u0103n li\u1EC1n t\xF9 t\xEC.
+  M\u1ED6I TIN NH\u1ECE PH\u1EA2I C\xD3 \u0110\u1EA6U M\u1EE4C RI\xCANG V\xC0 N\u1EB0M TR\xCAN M\u1ED8T G\u1EA0CH \u0110\u1EA6U D\xD2NG RI\xCANG BI\u1EC6T:
+  - **[Ch\u1EE7 \u0111\u1EC1 / \u0110\u1ECBa danh / S\u1EF1 vi\u1EC7c ng\u1EAFn in \u0111\u1EADm]**: 1-2 c\xE2u t\xF3m t\u1EAFt c\u1EE5 th\u1EC3 ai, \u1EDF \u0111\xE2u, s\u1ED1 li\u1EC7u ch\xEDnh. [T\xEAn b\xE1o](URL)
+
+  (B\u1EAET BU\u1ED8C c\xF3 d\u1EA5u xu\u1ED1ng d\xF2ng gi\u1EEFa c\xE1c tin nh\u1ECF \u0111\u1EC3 tho\xE1ng m\u1EAFt, d\u1EC5 nh\xECn v\xE0 d\u1EC5 \u0111\u1ECDc l\u01B0\u1EDBt)
 
 ## C\u1EA7n theo d\xF5i ti\u1EBFp
 Ch\u1EC9 ghi n\u1EBFu d\u1EEF li\u1EC7u c\xF3 nh\u1EAFc t\u1EDBi s\u1EF1 ki\u1EC7n s\u1EAFp di\u1EC5n ra ho\u1EB7c quy\u1EBFt \u0111\u1ECBnh s\u1EAFp c\xF3 hi\u1EC7u l\u1EF1c (k\xE8m m\u1ED1c th\u1EDDi gian). N\u1EBFu kh\xF4ng c\xF3 th\xEC b\u1ECF m\u1EE5c n\xE0y.
 
-## 5. Quy t\u1EAFc tr\xECnh b\xE0y
+## 5. Quy t\u1EAFc tr\xECnh b\xE0y v\xE0 b\u1ED1 c\u1EE5c (\u0110\u1EB6C BI\u1EC6T CH\xDA \xDD \u0110\u1ED8 THO\xC1NG V\xC0 D\u1EC4 \u0110\u1ECCC)
+- C\xE1c m\u1EE5c tin nh\u1ECF B\u1EAET BU\u1ED8C ph\u1EA3i c\xF3 \u0111\u1EA7u m\u1EE5c in \u0111\u1EADm (v\xED d\u1EE5: "- **[T\xEAn s\u1EF1 ki\u1EC7n / Ch\u1EE7 \u0111\u1EC1 ng\u1EAFn]**: [N\u1ED9i dung...]") v\xE0 d\u1EA5u xu\u1ED1ng d\xF2ng ng\u0103n c\xE1ch gi\u1EEFa c\xE1c tin.
+- TUY\u1EC6T \u0110\u1ED0I KH\xD4NG gom g\u1ED9p c\xE1c tin nh\u1ECF v\xE0o chung m\u1ED9t \u0111o\u1EA1n v\u0103n d\xE0i.
 - In \u0111\u1EADm c\xE1c con s\u1ED1 quan tr\u1ECDng, t\xEAn nh\xE2n v\u1EADt, c\u01A1 quan, \u0111\u1ECBa danh tr\u1ECDng t\xE2m v\xE0 m\u1ED1c th\u1EDDi gian.
-- D\xF9ng ti\xEAu \u0111\u1EC1 (##, ###) v\xE0 g\u1EA1ch \u0111\u1EA7u d\xF2ng nh\u1EA5t qu\xE1n, kh\xF4ng vi\u1EBFt th\xE0nh \u0111o\u1EA1n v\u0103n d\xE0i kh\xF3 l\u01B0\u1EDBt.
+- D\xF9ng ti\xEAu \u0111\u1EC1 (##, ###) v\xE0 g\u1EA1ch \u0111\u1EA7u d\xF2ng nh\u1EA5t qu\xE1n, r\xF5 r\xE0ng.
 - Khi d\xF9ng s\u1ED1 li\u1EC7u, ghi k\xE8m \u0111\u01A1n v\u1ECB v\xE0 th\u1EDDi \u0111i\u1EC3m n\u1EBFu d\u1EEF li\u1EC7u c\xF3.
 - N\u1EBFu hai b\xE1o m\xE2u thu\u1EABn v\u1EC1 m\u1ED9t con s\u1ED1 hay t\xECnh ti\u1EBFt, ghi c\u1EA3 hai v\xE0 n\xF3i r\xF5 b\xE1o n\xE0o n\xEAu g\xEC, kh\xF4ng t\u1EF1 ch\u1ECDn m\u1ED9t b\xEAn.
 
-## 6. Quy t\u1EAFc v\u1EC1 link ngu\u1ED3n (R\u1EA4T QUAN TR\u1ECCNG)
-- Sau m\u1ED7i tin M\u1EE9c 1 v\xE0 M\u1EE9c 2 ph\u1EA3i c\xF3 d\xF2ng ngu\u1ED3n \u0111\xFAng d\u1EA1ng: Ngu\u1ED3n: [T\xEAn b\xE1o](URL) ho\u1EB7c Ngu\u1ED3n: [T\xEAn b\xE1o 1](URL1) \xB7 [T\xEAn b\xE1o 2](URL2). Tin M\u1EE9c 3 k\xE8m [T\xEAn b\xE1o](URL) ngay cu\u1ED1i d\xF2ng.
-- URL ph\u1EA3i sao ch\xE9p CH\xCDNH X\xC1C t\u1EEB tr\u01B0\u1EDDng link trong d\u1EEF li\u1EC7u. Tuy\u1EC7t \u0111\u1ED1i kh\xF4ng t\u1EF1 t\u1EA1o, \u0111o\xE1n hay s\u1EEDa URL.
+## 6. Quy t\u1EAFc v\u1EC1 link ngu\u1ED3n (B\u1EAET BU\u1ED8C & R\u1EA4T QUAN TR\u1ECCNG)
+- M\u1EE5c "T\u1ED5ng quan nhanh": M\u1ED7i g\u1EA1ch \u0111\u1EA7u d\xF2ng B\u1EAET BU\u1ED8C ph\u1EA3i c\xF3 link ngu\u1ED3n [T\xEAn b\xE1o](URL) \u1EDF cu\u1ED1i.
+- Sau m\u1ED7i tin M\u1EE9c 1 v\xE0 M\u1EE9c 2: Ph\u1EA3i c\xF3 d\xF2ng ngu\u1ED3n \u0111\xFAng d\u1EA1ng: Ngu\u1ED3n: [T\xEAn b\xE1o](URL) ho\u1EB7c Ngu\u1ED3n: [T\xEAn b\xE1o 1](URL1) \xB7 [T\xEAn b\xE1o 2](URL2).
+- Tin M\u1EE9c 3 (Tin nhanh): K\xE8m link [T\xEAn b\xE1o](URL) ngay cu\u1ED1i m\u1ED7i tin.
+- URL ph\u1EA3i sao ch\xE9p CH\xCDNH X\xC1C t\u1EEB tr\u01B0\u1EDDng link trong d\u1EEF li\u1EC7u JSON. Tuy\u1EC7t \u0111\u1ED1i kh\xF4ng t\u1EF1 t\u1EA1o, kh\xF4ng b\u1ECBa, kh\xF4ng \u0111o\xE1n hay s\u1EEDa URL.
 - T\xEAn b\xE1o l\u1EA5y t\u1EEB tr\u01B0\u1EDDng sourceName. M\u1ED7i m\u1EE5c t\u1ED1i \u0111a 3 link, \u01B0u ti\xEAn b\xE0i \u0111\u1EA7y \u0111\u1EE7 nh\u1EA5t.`;
 }
 app.post("/api/ai-summary", async (req, res) => {
@@ -307,15 +323,32 @@ app.post("/api/ai-summary", async (req, res) => {
     const systemInstruction = buildSystemInstruction(dateStr, sampleArticles.length, sourceCount);
     const userPrompt = `D\u01B0\u1EDBi \u0111\xE2y l\xE0 danh s\xE1ch c\xE1c b\xE0i vi\u1EBFt RSS trong ng\xE0y:
 ${JSON.stringify(sampleArticles, null, 2)}`;
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: [userPrompt],
-      config: {
-        systemInstruction,
-        temperature: 0.1,
-        maxOutputTokens: 16384
-      }
-    });
+    const requestedModel = req.body.model || "gemini-3.1-flash-lite";
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: requestedModel,
+        contents: [userPrompt],
+        config: {
+          systemInstruction,
+          temperature: 0.1,
+          maxOutputTokens: 16384
+        }
+      });
+    } catch (modelErr) {
+      console.warn(`L\u1ED7i khi g\u1ECDi model ${requestedModel}:`, modelErr?.message || modelErr);
+      const fallbackModel = requestedModel === "gemini-3.1-flash-lite" ? "gemini-3.8-flash" : "gemini-3.1-flash-lite";
+      console.info(`\u0110ang th\u1EED l\u1EA1i v\u1EDBi fallback model: ${fallbackModel}...`);
+      response = await ai.models.generateContent({
+        model: fallbackModel,
+        contents: [userPrompt],
+        config: {
+          systemInstruction,
+          temperature: 0.1,
+          maxOutputTokens: 16384
+        }
+      });
+    }
     const summaryText = response.text || "Kh\xF4ng th\u1EC3 t\u1EA1o b\u1EA3n tin t\u1ED5ng h\u1EE3p.";
     return res.json({ success: true, summary: summaryText });
   } catch (err) {

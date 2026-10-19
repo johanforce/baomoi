@@ -17,6 +17,7 @@ import { ErrorBanner } from './components/ErrorBanner';
 import { FilterBottomSheet } from './components/FilterBottomSheet';
 import { SavedArticlesView } from './components/SavedArticlesView';
 import { AiSummaryModal } from './components/AiSummaryModal';
+import { ArticleAudioModal } from './components/ArticleAudioModal';
 import { Pagination } from './components/Pagination';
 import { Footer } from './components/Footer';
 import { SourceManager } from './pages/SourceManager';
@@ -378,6 +379,9 @@ export default function App() {
 
       {/* AI Summary Modal */}
       <AiSummaryModal isOpen={isAiSummaryOpen} onClose={() => setIsAiSummaryOpen(false)} />
+
+      {/* Bot Đọc Báo (TTS) Audio Modal */}
+      <ArticleAudioModal />
 
       {/* Toast Alert System */}
       <ToastContainer />

@@ -287,9 +287,7 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
         ['khoa-hoc', 'Khoa học'],
       ]),
       ...feeds('Báo Thanh Niên', P_TN, TN, [
-        ['cong-nghe-game', 'Công nghệ'],
-        ['cong-nghe-game/chuyen-doi-so', 'Chuyển đổi số'],
-        ['cong-nghe-game/san-pham-moi', 'Sản phẩm mới'],
+        ['cong-nghe', 'Công nghệ'],
       ]),
       ...feeds('Báo Dân Trí', P_DT, DT, [
         ['suc-manh-so', 'Sức mạnh số'],

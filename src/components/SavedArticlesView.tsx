@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Bookmark, ArrowLeft, Trash2, ExternalLink } from 'lucide-react';
+import { Bookmark, ArrowLeft, Trash2, ExternalLink, Headphones } from 'lucide-react';
 import { sourcesStore, useSourcesStore } from '../store/sourcesStore';
 import { formatRelativeTimeVi } from '../utils/date';
-import { removeVietnameseTones } from '../utils/text';
+import { decodeHtmlEntities, removeVietnameseTones } from '../utils/text';
 
 interface SavedArticlesViewProps {
   onBack: () => void;
@@ -93,10 +93,10 @@ export const SavedArticlesView: React.FC<SavedArticlesViewProps> = ({ onBack }) 
                   onClick={() => sourcesStore.markArticleRead(art.id)}
                   className="block text-base font-bold text-slate-900 dark:text-white hover:text-[#00A859] transition-colors line-clamp-2 mb-1"
                 >
-                  {art.title}
+                  {decodeHtmlEntities(art.title)}
                 </a>
                 <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-2.5 leading-relaxed">
-                  {art.description}
+                  {decodeHtmlEntities(art.description)}
                 </p>
                 <div className="flex items-center gap-2 text-xs text-slate-500">
                   <span className="font-semibold text-slate-700 dark:text-slate-300">
@@ -123,6 +123,15 @@ export const SavedArticlesView: React.FC<SavedArticlesViewProps> = ({ onBack }) 
                   </div>
                 )}
                 <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => sourcesStore.openAudio(art)}
+                    className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-md transition-colors"
+                    title="Nghe bot đọc bài viết này"
+                    aria-label="Bot đọc báo"
+                  >
+                    <Headphones className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={() => sourcesStore.toggleBookmark(art)}
                     className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-md transition-colors"

@@ -3,6 +3,7 @@ import { Flame, BarChart3, ExternalLink, ChevronLeft, ChevronRight } from 'lucid
 import { sourcesStore, useSourcesStore } from '../store/sourcesStore';
 import { Article } from '../types';
 import { formatRelativeTimeVi } from '../utils/date';
+import { decodeHtmlEntities } from '../utils/text';
 
 interface TrendingPanelProps {
   topArticles: Article[];
@@ -111,13 +112,19 @@ export const TrendingPanel: React.FC<TrendingPanelProps> = ({
               return (
                 <div>
                   {/* Image & Source Badge */}
-                  <div className="relative aspect-[16/10] rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2.5">
+                  <a
+                    href={currentArt.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => sourcesStore.markArticleRead(currentArt.id)}
+                    className="block relative aspect-[16/10] rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2.5 group cursor-pointer"
+                  >
                     {currentArt.thumbnail ? (
                       <img
                         key={currentArt.id}
                         src={currentArt.thumbnail}
                         alt={currentArt.title}
-                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         referrerPolicy="no-referrer"
                       />
                     ) : (
@@ -131,7 +138,7 @@ export const TrendingPanel: React.FC<TrendingPanelProps> = ({
                     <div className="absolute top-2 right-2 bg-[#00A859] text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-xs">
                       {numStr} / {totalStr}
                     </div>
-                  </div>
+                  </a>
 
                   {/* Title & metadata */}
                   <a
@@ -141,7 +148,7 @@ export const TrendingPanel: React.FC<TrendingPanelProps> = ({
                     onClick={() => sourcesStore.markArticleRead(currentArt.id)}
                     className="block text-xs font-bold text-slate-800 dark:text-slate-100 hover:text-[#00A859] transition-colors line-clamp-2 leading-snug mb-1"
                   >
-                    {currentArt.title}
+                    {decodeHtmlEntities(currentArt.title)}
                   </a>
 
                   <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 pt-1">
@@ -221,7 +228,7 @@ export const TrendingPanel: React.FC<TrendingPanelProps> = ({
                       onClick={() => sourcesStore.markArticleRead(art.id)}
                       className="block text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-[#00A859] transition-colors line-clamp-2 leading-snug"
                     >
-                      {art.title}
+                      {decodeHtmlEntities(art.title)}
                     </a>
                     <div className="flex items-center gap-1.5 mt-1 text-[11px] text-slate-400 dark:text-slate-500">
                       <span>{art.sourceName}</span>

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Bookmark, ExternalLink } from 'lucide-react';
+import { Bookmark, ExternalLink, Headphones } from 'lucide-react';
 import { sourcesStore, useSourcesStore } from '../store/sourcesStore';
 import { Article } from '../types';
 import { formatRelativeTimeVi } from '../utils/date';
+import { decodeHtmlEntities } from '../utils/text';
 
 interface ArticleItemProps {
   article: Article;
@@ -24,6 +25,12 @@ export const ArticleItem: React.FC<ArticleItemProps> = ({ article }) => {
     sourcesStore.toggleBookmark(article);
   };
 
+  const handleOpenAudio = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    sourcesStore.openAudio(article);
+  };
+
   return (
     <article className="group bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 rounded-xl border border-slate-200/70 dark:border-slate-800 transition-all hover:border-[#00A859]/40 hover:shadow-xs active:bg-slate-50/50 dark:active:bg-slate-800/40">
       <div className="flex gap-3 sm:gap-4 md:gap-5 items-start justify-between">
@@ -43,12 +50,12 @@ export const ArticleItem: React.FC<ArticleItemProps> = ({ article }) => {
                   : 'text-slate-900 dark:text-slate-100'
               }`}
             >
-              {article.title}
+              {decodeHtmlEntities(article.title)}
             </h3>
 
             {article.description && (
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-2 sm:mb-3">
-                {article.description}
+                {decodeHtmlEntities(article.description)}
               </p>
             )}
           </a>
@@ -67,7 +74,18 @@ export const ArticleItem: React.FC<ArticleItemProps> = ({ article }) => {
               </span>
             </div>
 
-            <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={handleOpenAudio}
+                className="flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg text-emerald-600 dark:text-emerald-400 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 transition-colors active:scale-95 text-[11px] sm:text-xs font-semibold cursor-pointer"
+                title="Nghe bot đọc bài báo này"
+                aria-label="Bot đọc báo"
+              >
+                <Headphones className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden xs:inline">Đọc báo</span>
+              </button>
+
               <button
                 onClick={handleBookmark}
                 className={`p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95 ${

@@ -1,6 +1,6 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { Article } from '../types';
-import { removeVietnameseTones } from '../utils/text';
+import { decodeHtmlEntities, removeVietnameseTones } from '../utils/text';
 
 interface TinTongHopDB extends DBSchema {
   articles: {
@@ -49,7 +49,12 @@ export async function saveArticlesToDB(articles: Article[]): Promise<number> {
   let savedCount = 0;
 
   for (const article of articles) {
-    await tx.store.put(article);
+    const cleanArticle: Article = {
+      ...article,
+      title: decodeHtmlEntities(article.title),
+      description: decodeHtmlEntities(article.description),
+    };
+    await tx.store.put(cleanArticle);
     savedCount++;
   }
   await tx.done;
@@ -178,7 +183,11 @@ export async function queryArticlesFromDB(filter: ArticleQueryFilter): Promise<{
   const total = rawArticles.length;
   const offset = filter.offset || 0;
   const limit = filter.limit || 20;
-  const paginated = rawArticles.slice(offset, offset + limit);
+  const paginated = rawArticles.slice(offset, offset + limit).map((art) => ({
+    ...art,
+    title: decodeHtmlEntities(art.title),
+    description: decodeHtmlEntities(art.description),
+  }));
 
   return {
     articles: paginated,
@@ -296,5 +305,49 @@ export async function getTopRecentArticles(
     return timeB - timeA;
   });
 
-  return filtered.slice(0, limit);
+  return filtered.slice(0, limit).map((art) => ({
+    ...art,
+    title: decodeHtmlEntities(art.title),
+    description: decodeHtmlEntities(art.description),
+  }));
+}
+
+/**
+ * Tự động quét và giải mã thực thể HTML còn sót lại trong IndexedDB (ví dụ bài Thanh Niên cũ)
+ */
+export async function migrateHtmlEntitiesInDB(): Promise<number> {
+  try {
+    const db = await getDB();
+    const tx = db.transaction('articles', 'readwrite');
+    let cursor = await tx.store.openCursor();
+    let updatedCount = 0;
+    while (cursor) {
+      const art = cursor.value;
+      let changed = false;
+      if (art.title && art.title.includes('&')) {
+        const decoded = decodeHtmlEntities(art.title);
+        if (decoded !== art.title) {
+          art.title = decoded;
+          changed = true;
+        }
+      }
+      if (art.description && art.description.includes('&')) {
+        const decoded = decodeHtmlEntities(art.description);
+        if (decoded !== art.description) {
+          art.description = decoded;
+          changed = true;
+        }
+      }
+      if (changed) {
+        await cursor.update(art);
+        updatedCount++;
+      }
+      cursor = await cursor.continue();
+    }
+    await tx.done;
+    return updatedCount;
+  } catch (err) {
+    console.warn('Lỗi migrate html entities trong DB:', err);
+    return 0;
+  }
 }
