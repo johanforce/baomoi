@@ -1,16 +1,23 @@
 import { useEffect, useState } from 'react';
 import { buildDefaultSources } from '../data/defaultSources';
-import { cleanupOldArticles, saveArticlesToDB } from '../services/db';
+import { cleanupOldArticles, saveArticlesToDB, migrateLegacyCategoriesInDB } from '../services/db';
 import { fetchFeed, fetchFeedsConcurrently } from '../services/rssService';
 import { Article, FeedStatus, SourceItem, ToastMessage } from '../types';
 import { generateHash } from '../utils/hash';
 import { isValidFeedUrl } from '../utils/url';
 
-const STORAGE_SOURCES_KEY = 'sources_override_v2'; // bumped to v2 for seamless upgrade
+const STORAGE_SOURCES_KEY = 'sources_override_v4'; // bumped to v4 for 11 categories
 const STORAGE_STATUSES_KEY = 'feed_statuses_v2';
 const STORAGE_READ_IDS_KEY = 'tintonghop_read_ids';
 const STORAGE_BOOKMARKS_KEY = 'tintonghop_bookmarks';
 const STORAGE_THEME_KEY = 'tintonghop_theme';
+
+// Chạy chuẩn hóa category cho dữ liệu đã lưu trong IndexedDB
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    migrateLegacyCategoriesInDB();
+  }, 300);
+}
 
 /**
  * Trích xuất tên trang báo gốc từ tiêu đề nguồn
@@ -41,14 +48,14 @@ export interface StoreState {
 function getInitialSources(): SourceItem[] {
   const defaults = buildDefaultSources();
   try {
-    const saved = localStorage.getItem(STORAGE_SOURCES_KEY) || localStorage.getItem('sources_override_v1');
+    const saved = localStorage.getItem(STORAGE_SOURCES_KEY) || localStorage.getItem('sources_override_v2') || localStorage.getItem('sources_override_v1');
     if (saved) {
       const parsed: SourceItem[] = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
         const savedMap = new Map<string, SourceItem>(parsed.map((s) => [s.id, s]));
 
         // Giữ lại tùy chỉnh của người dùng (feed_url đã sửa, toggle enabled)
-        // và tự động nạp thêm các kênh mới xuất hiện trong defaultSources
+        // và tự động áp dụng phân loại danh mục mới
         const merged: SourceItem[] = defaults.map((def) => {
           const existing = savedMap.get(def.id);
           if (existing) {
@@ -60,6 +67,7 @@ function getInitialSources(): SourceItem[] {
               ...def,
               feed_url: isUserCustomizedUrl ? existing.feed_url : def.feed_url,
               enabled: existing.enabled !== undefined ? existing.enabled : def.enabled,
+              categoryName: def.categoryName, // Luôn cập nhật theo 11 danh mục mới
               isCustom: false,
             };
           }

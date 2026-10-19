@@ -7,17 +7,34 @@ interface CategoryBarProps {
   onSelectCategory: (category: string) => void;
 }
 
+export const ORDERED_MAIN_CATEGORIES = [
+  'Mới nhất',
+  'Thời sự',
+  'Thế giới',
+  'Kinh doanh',
+  'Công nghệ',
+  'Thể thao',
+  'Giải trí',
+  'Đời sống',
+  'Sức khỏe',
+  'Pháp luật',
+  'Xe',
+] as const;
+
 export const CategoryBar: React.FC<CategoryBarProps> = ({ selectedCategory, onSelectCategory }) => {
   const { sources } = useSourcesStore();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Lấy danh sách danh mục duy nhất từ các nguồn hiện tại
+  // Danh mục chuẩn hóa theo thứ tự yêu cầu + danh mục tùy biến nếu có
   const categories = React.useMemo(() => {
-    const set = new Set<string>();
+    const mainSet = new Set<string>(ORDERED_MAIN_CATEGORIES);
+    const customCats = new Set<string>();
     sources.forEach((s) => {
-      if (s.categoryName) set.add(s.categoryName);
+      if (s.categoryName && !mainSet.has(s.categoryName)) {
+        customCats.add(s.categoryName);
+      }
     });
-    return ['Mới nhất', ...Array.from(set)];
+    return [...ORDERED_MAIN_CATEGORIES, ...Array.from(customCats)];
   }, [sources]);
 
   const handleScroll = (direction: 'left' | 'right') => {

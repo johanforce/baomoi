@@ -17,6 +17,8 @@ import { ErrorBanner } from './components/ErrorBanner';
 import { FilterBottomSheet } from './components/FilterBottomSheet';
 import { SavedArticlesView } from './components/SavedArticlesView';
 import { AiSummaryModal } from './components/AiSummaryModal';
+import { Pagination } from './components/Pagination';
+import { Footer } from './components/Footer';
 import { SourceManager } from './pages/SourceManager';
 import { useArticles } from './hooks/useArticles';
 import { useFeedHealth } from './hooks/useFeedHealth';
@@ -86,13 +88,15 @@ export default function App() {
     }
   }, [selectedCategory, selectedDate, selectedSourceIds, currentView]);
 
-  // 2. Query articles using custom hook
+  // 2. Query articles using custom hook (15 articles per page)
   const {
     articles,
     totalCount,
+    page,
+    setPage,
+    pageSize,
+    totalPages,
     isLoading,
-    hasMore,
-    loadMore,
     sourceCounts,
     storedDates,
     topRecentArticles,
@@ -311,7 +315,10 @@ export default function App() {
                   <>
                     {/* Latest News Slider View Pager (Top of central feed area) */}
                     {topRecentArticles.length > 0 && (
-                      <LatestNewsSlider articles={topRecentArticles} />
+                      <LatestNewsSlider
+                        articles={topRecentArticles}
+                        categoryTitle={selectedCategory}
+                      />
                     )}
 
                     {/* News items list */}
@@ -321,17 +328,17 @@ export default function App() {
                       ))}
                     </div>
 
-                    {/* Pagination Button */}
-                    {hasMore && (
-                      <div className="pt-4 text-center">
-                        <button
-                          onClick={loadMore}
-                          className="w-full py-3 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-xs transition-colors cursor-pointer"
-                        >
-                          Xem thêm bài viết ({articles.length}/{totalCount})
-                        </button>
-                      </div>
-                    )}
+                    {/* Pagination Component (15 articles per page) */}
+                    <Pagination
+                      page={page}
+                      totalPages={totalPages}
+                      totalCount={totalCount}
+                      pageSize={pageSize}
+                      onPageChange={(newPage) => {
+                        setPage(newPage);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    />
                   </>
                 )}
               </div>
@@ -339,6 +346,18 @@ export default function App() {
           </main>
         </>
       )}
+
+      {/* Website Footer */}
+      <Footer
+        onSelectCategory={(cat) => {
+          setSelectedCategory(cat);
+          setSelectedSourceIds([]);
+          setCurrentView('feed');
+        }}
+        onOpenBookmarks={() => setCurrentView('bookmarks')}
+        onOpenSourceManager={() => handleOpenSourceManager('all')}
+        onOpenAiSummary={() => setIsAiSummaryOpen(true)}
+      />
 
       {/* Mobile Filter Bottom Sheet */}
       <FilterBottomSheet

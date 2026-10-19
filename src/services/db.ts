@@ -209,18 +209,92 @@ export async function cleanupOldArticles(maxDays = 30): Promise<number> {
 }
 
 /**
- * Lấy top 10 bài mới cập nhật nhất (dành cho Trending panel)
+ * Chuẩn hóa danh mục bài viết từ tên cũ sang hệ thống danh mục mới:
+ * Thời sự, Thế giới, Kinh doanh, Công nghệ, Thể thao, Giải trí, Đời sống, Sức khỏe, Pháp luật, Xe
  */
-export async function getTopRecentArticles(limit = 10): Promise<Article[]> {
+export function normalizeCategoryName(rawCat: string, title?: string, sourceTitle?: string): string {
+  if (!rawCat) return 'Thời sự';
+
+  if (rawCat === 'Tài chính & Kinh tế') return 'Kinh doanh';
+  if (rawCat === 'Thể thao') return 'Thể thao';
+
+  const text = `${title || ''} ${sourceTitle || ''} ${rawCat}`.toLowerCase();
+
+  if (rawCat === 'Tin tức & Thời sự tổng hợp') {
+    if (text.includes('thế giới') || text.includes('quốc tế') || text.includes('quân sự')) return 'Thế giới';
+    if (text.includes('pháp luật') || text.includes('vụ án') || text.includes('pháp đình')) return 'Pháp luật';
+    return 'Thời sự';
+  }
+
+  if (rawCat === 'Công nghệ & Đời sống') {
+    if (text.includes('sức khỏe') || text.includes('y tế') || text.includes('bệnh') || text.includes('dinh dưỡng')) return 'Sức khỏe';
+    if (text.includes('ô tô') || text.includes('xe máy') || text.includes('xe điện') || text.includes(' xe ')) return 'Xe';
+    if (text.includes('giải trí') || text.includes('sao') || text.includes('showbiz') || text.includes('phim') || text.includes('nhạc')) return 'Giải trí';
+    if (text.includes('công nghệ') || text.includes('số hóa') || text.includes('khoa học') || text.includes('ai') || text.includes('tinhte')) return 'Công nghệ';
+    return 'Đời sống';
+  }
+
+  return rawCat;
+}
+
+/**
+ * Tự động quét và chuẩn hóa các bài viết trong IndexedDB sang 11 danh mục mới
+ */
+export async function migrateLegacyCategoriesInDB(): Promise<void> {
+  try {
+    const db = await getDB();
+    const tx = db.transaction('articles', 'readwrite');
+    let cursor = await tx.store.openCursor();
+    while (cursor) {
+      const art = cursor.value;
+      const normalized = normalizeCategoryName(art.categoryName, art.title, art.sourceName);
+      if (normalized !== art.categoryName) {
+        art.categoryName = normalized;
+        await cursor.update(art);
+      }
+      cursor = await cursor.continue();
+    }
+    await tx.done;
+  } catch (err) {
+    console.warn('Lỗi migrate category trong DB:', err);
+  }
+}
+
+/**
+ * Lấy top bài mới cập nhật nhất (cho Slider theo từng Category hoặc Mới nhất)
+ */
+export async function getTopRecentArticles(
+  limit = 10,
+  categoryName?: string,
+  dateStr?: string
+): Promise<Article[]> {
   const db = await getDB();
   const tx = db.transaction('articles', 'readonly');
-  const articles = await tx.store.getAll();
+  let rawArticles: Article[] = [];
 
-  articles.sort((a, b) => {
+  if (categoryName && categoryName !== 'Mới nhất') {
+    const index = tx.store.index('by-category');
+    rawArticles = await index.getAll(categoryName);
+  } else {
+    rawArticles = await tx.store.getAll();
+  }
+
+  // Lọc theo dateStr nếu có
+  let filtered = rawArticles;
+  if (dateStr) {
+    const onDate = rawArticles.filter((a) => a.dateStr === dateStr);
+    // Nếu ngày được chọn có bài, ưu tiên ngày đó; nếu ít hơn 3 bài, vẫn lấy các bài gần nhất của chuyên mục
+    if (onDate.length >= 3) {
+      filtered = onDate;
+    }
+  }
+
+  // Sắp xếp bài mới nhất lên đầu (ưu tiên bài có thumbnail hợp lệ)
+  filtered.sort((a, b) => {
     const timeA = new Date(a.pubDate).getTime() || a.fetchedAt;
     const timeB = new Date(b.pubDate).getTime() || b.fetchedAt;
     return timeB - timeA;
   });
 
-  return articles.slice(0, limit);
+  return filtered.slice(0, limit);
 }
