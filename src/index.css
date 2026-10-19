@@ -16,3 +16,13 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@keyframes sliderProgress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+

@@ -48,6 +48,24 @@ export const SourceSidebar: React.FC<SourceSidebarProps> = ({
     });
   }, [sources, selectedCategory]);
 
+  const isNoneSelected = selectedSourceIds.includes('__NONE__');
+
+  const allCategorySourceIds = React.useMemo(
+    () => categorySources.map((s) => s.id),
+    [categorySources]
+  );
+
+  const isAllSelected =
+    !isNoneSelected &&
+    (selectedSourceIds.length === 0 ||
+      (categorySources.length > 0 &&
+        categorySources.every((s) => selectedSourceIds.includes(s.id))));
+
+  const isSomeSelected =
+    !isNoneSelected &&
+    !isAllSelected &&
+    categorySources.some((s) => selectedSourceIds.includes(s.id));
+
   // Gom nhóm các kênh theo trang báo gốc (Outlet)
   const outletGroups: OutletGroup[] = React.useMemo(() => {
     const map = new Map<string, SourceItem[]>();
@@ -74,7 +92,8 @@ export const SourceSidebar: React.FC<SourceSidebarProps> = ({
         if (st?.state === 'loading') isLoading = true;
 
         const isChecked =
-          selectedSourceIds.length === 0 || selectedSourceIds.includes(s.id);
+          !isNoneSelected &&
+          (selectedSourceIds.length === 0 || selectedSourceIds.includes(s.id));
         if (isChecked) checkedCount++;
       });
 
@@ -91,22 +110,15 @@ export const SourceSidebar: React.FC<SourceSidebarProps> = ({
 
     // Sắp xếp các báo có bài lên trước
     return groups.sort((a, b) => b.totalArticles - a.totalArticles || a.name.localeCompare(b.name));
-  }, [categorySources, sourceCounts, statuses, selectedSourceIds]);
-
-  const allCategorySourceIds = React.useMemo(
-    () => categorySources.map((s) => s.id),
-    [categorySources]
-  );
-
-  const isAllSelected =
-    selectedSourceIds.length === 0 ||
-    categorySources.every((s) => selectedSourceIds.includes(s.id));
+  }, [categorySources, sourceCounts, statuses, selectedSourceIds, isNoneSelected]);
 
   const handleToggleAll = () => {
     if (isAllSelected) {
-      onSelectAllSources([]);
+      // Đang chọn tất cả -> Bấm vào thì bỏ tích hết tất cả trang báo
+      onSelectAllSources(['__NONE__']);
     } else {
-      onSelectAllSources(allCategorySourceIds);
+      // Đang bỏ chọn hết hoặc chọn 1 phần -> Bấm vào thì chọn lại tất cả trang báo
+      onSelectAllSources([]);
     }
   };
 
@@ -121,20 +133,50 @@ export const SourceSidebar: React.FC<SourceSidebarProps> = ({
     const groupSourceIds = group.sources.map((s) => s.id);
     if (group.allChecked) {
       // Bỏ chọn tất cả kênh của báo này
-      const remaining = (
-        selectedSourceIds.length === 0 ? allCategorySourceIds : selectedSourceIds
-      ).filter((id) => !groupSourceIds.includes(id));
-      onSelectAllSources(remaining);
+      const currentSelected = isNoneSelected
+        ? []
+        : selectedSourceIds.length === 0
+        ? allCategorySourceIds
+        : selectedSourceIds;
+      const remaining = currentSelected.filter((id) => !groupSourceIds.includes(id));
+      onSelectAllSources(remaining.length === 0 ? ['__NONE__'] : remaining);
     } else {
       // Chọn tất cả kênh của báo này
-      const base = selectedSourceIds.length === 0 ? allCategorySourceIds : selectedSourceIds;
-      const combined = Array.from(new Set([...base, ...groupSourceIds]));
-      onSelectAllSources(combined);
+      const currentSelected = isNoneSelected
+        ? []
+        : selectedSourceIds.length === 0
+        ? allCategorySourceIds
+        : selectedSourceIds;
+      const combined = Array.from(new Set([...currentSelected, ...groupSourceIds]));
+      if (allCategorySourceIds.length > 0 && combined.length >= allCategorySourceIds.length) {
+        onSelectAllSources([]);
+      } else {
+        onSelectAllSources(combined);
+      }
     }
   };
 
   const handleSelectOnlyOutlet = (group: OutletGroup) => {
     onSelectAllSources(group.sources.map((s) => s.id));
+  };
+
+  const handleToggleChannel = (channelId: string) => {
+    const currentSelected = isNoneSelected
+      ? []
+      : selectedSourceIds.length === 0
+      ? allCategorySourceIds
+      : selectedSourceIds;
+    if (currentSelected.includes(channelId)) {
+      const remaining = currentSelected.filter((id) => id !== channelId);
+      onSelectAllSources(remaining.length === 0 ? ['__NONE__'] : remaining);
+    } else {
+      const combined = [...currentSelected, channelId];
+      if (allCategorySourceIds.length > 0 && combined.length >= allCategorySourceIds.length) {
+        onSelectAllSources([]);
+      } else {
+        onSelectAllSources(combined);
+      }
+    }
   };
 
   const handleReloadOutlet = async (group: OutletGroup, e: React.MouseEvent) => {
@@ -162,13 +204,12 @@ export const SourceSidebar: React.FC<SourceSidebarProps> = ({
               checked={isAllSelected}
               ref={(el) => {
                 if (el) {
-                  const someSelected = selectedSourceIds.length > 0 && !isAllSelected;
-                  el.indeterminate = someSelected;
+                  el.indeterminate = isSomeSelected;
                 }
               }}
               onChange={handleToggleAll}
               className="w-4 h-4 rounded text-[#00A859] focus:ring-[#00A859] border-slate-300 dark:border-slate-600 dark:bg-slate-700 cursor-pointer shrink-0"
-              title="Chọn / Bỏ chọn tất cả trang báo"
+              title={isAllSelected ? 'Bỏ chọn tất cả trang báo' : 'Chọn tất cả trang báo'}
             />
             <div>
               <label
@@ -309,8 +350,9 @@ export const SourceSidebar: React.FC<SourceSidebarProps> = ({
                     <div className="ml-7 pl-2 border-l border-slate-200 dark:border-slate-800 space-y-1 my-1">
                       {group.sources.map((source) => {
                         const isChannelChecked =
-                          selectedSourceIds.length === 0 ||
-                          selectedSourceIds.includes(source.id);
+                          !isNoneSelected &&
+                          (selectedSourceIds.length === 0 ||
+                            selectedSourceIds.includes(source.id));
                         const channelStatus = statuses[source.id];
                         const channelCount = sourceCounts[source.id] || 0;
                         const channelTitle = source.title.includes(' - ')
@@ -326,7 +368,7 @@ export const SourceSidebar: React.FC<SourceSidebarProps> = ({
                               <input
                                 type="checkbox"
                                 checked={isChannelChecked}
-                                onChange={() => onToggleSourceId(source.id)}
+                                onChange={() => handleToggleChannel(source.id)}
                                 className="w-3.5 h-3.5 rounded text-[#00A859] focus:ring-[#00A859] border-slate-300 dark:border-slate-600"
                               />
                               <span className="truncate">{channelTitle}</span>

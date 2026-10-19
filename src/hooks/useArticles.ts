@@ -30,6 +30,19 @@ export function useArticles({ categoryName, dateStr, sourceIds, searchQuery }: U
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
+      if (sourceIds.includes('__NONE__')) {
+        setArticles([]);
+        setTotalCount(0);
+        const counts = await getSourceCountsFromDB(dateStr || undefined);
+        setSourceCounts(counts);
+        const dates = await getStoredDatesFromDB();
+        setStoredDates(dates);
+        const topRecent = await getTopRecentArticles(10);
+        setTopRecentArticles(topRecent);
+        setIsLoading(false);
+        return;
+      }
+
       const result = await queryArticlesFromDB({
         categoryName: categoryName === 'Mới nhất' ? undefined : categoryName,
         dateStr: dateStr || undefined,

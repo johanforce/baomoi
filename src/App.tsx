@@ -10,6 +10,7 @@ import { SourceSidebar } from './components/SourceSidebar';
 import { FeaturedArticle } from './components/FeaturedArticle';
 import { ArticleItem } from './components/ArticleItem';
 import { TrendingPanel } from './components/TrendingPanel';
+import { LatestNewsSlider } from './components/LatestNewsSlider';
 import { SkeletonList } from './components/SkeletonList';
 import { ToastContainer } from './components/Toast';
 import { ErrorBanner } from './components/ErrorBanner';
@@ -235,8 +236,8 @@ export default function App() {
             />
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6 xl:gap-8 items-start">
-              {/* Left Column (Desktop): Date & Newspaper Filters */}
-              <div className="hidden md:block md:col-span-4 lg:col-span-3 xl:col-span-3 2xl:col-span-2 sticky top-20">
+              {/* Left Column: Date & Newspaper Filters */}
+              <div className="hidden md:block md:col-span-4 lg:col-span-3 sticky top-20">
                 <SourceSidebar
                   selectedCategory={selectedCategory}
                   selectedDate={selectedDate}
@@ -250,8 +251,8 @@ export default function App() {
                 />
               </div>
 
-              {/* Middle Column: News Feed */}
-              <div className="col-span-1 md:col-span-8 lg:col-span-6 xl:col-span-6 2xl:col-span-7 space-y-3.5 sm:space-y-4">
+              {/* Main Feed Column (Expanded to fill space without right column) */}
+              <div className="col-span-1 md:col-span-8 lg:col-span-9 space-y-3.5 sm:space-y-4">
                 {/* Status Bar */}
                 <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
                   <div className="flex items-center gap-2">
@@ -308,12 +309,14 @@ export default function App() {
                   </div>
                 ) : (
                   <>
-                    {/* Featured Top Story */}
-                    {featuredArticle && <FeaturedArticle article={featuredArticle} />}
+                    {/* Latest News Slider View Pager (Top of central feed area) */}
+                    {topRecentArticles.length > 0 && (
+                      <LatestNewsSlider articles={topRecentArticles} />
+                    )}
 
                     {/* News items list */}
                     <div className="space-y-3">
-                      {listArticles.map((article) => (
+                      {articles.map((article) => (
                         <ArticleItem key={article.id} article={article} />
                       ))}
                     </div>
@@ -331,15 +334,6 @@ export default function App() {
                     )}
                   </>
                 )}
-              </div>
-
-              {/* Right Column (Desktop LG): Trending & Newspaper Stats (3 cols) */}
-              <div className="hidden lg:block lg:col-span-3 xl:col-span-3 2xl:col-span-3 sticky top-20">
-                <TrendingPanel
-                  topArticles={topRecentArticles}
-                  sourceCounts={sourceCounts}
-                  onSelectSource={handleSelectOnlySourceId}
-                />
               </div>
             </div>
           </main>

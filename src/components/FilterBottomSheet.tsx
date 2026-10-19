@@ -57,6 +57,8 @@ export const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
       someChecked: boolean;
     }[] = [];
 
+    const isNoneSelected = selectedSourceIds.includes('__NONE__');
+
     map.forEach((srcList, outletName) => {
       let totalArticles = 0;
       let hasError = false;
@@ -65,7 +67,7 @@ export const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
       srcList.forEach((s) => {
         totalArticles += sourceCounts[s.id] || 0;
         if (statuses[s.id]?.state === 'error') hasError = true;
-        if (selectedSourceIds.length === 0 || selectedSourceIds.includes(s.id)) checkedCount++;
+        if (!isNoneSelected && (selectedSourceIds.length === 0 || selectedSourceIds.includes(s.id))) checkedCount++;
       });
 
       groups.push({
@@ -81,22 +83,58 @@ export const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
     return groups.sort((a, b) => b.totalArticles - a.totalArticles || a.name.localeCompare(b.name));
   })();
 
+  const isNoneSelected = selectedSourceIds.includes('__NONE__');
   const allCategorySourceIds = categorySources.map((s) => s.id);
   const isAllSelected =
-    selectedSourceIds.length === 0 ||
-    categorySources.every((s) => selectedSourceIds.includes(s.id));
+    !isNoneSelected &&
+    (selectedSourceIds.length === 0 ||
+      (categorySources.length > 0 && categorySources.every((s) => selectedSourceIds.includes(s.id))));
+  const isSomeSelected =
+    !isNoneSelected &&
+    !isAllSelected &&
+    categorySources.some((s) => selectedSourceIds.includes(s.id));
 
   const handleToggleOutlet = (group: typeof outletGroups[0]) => {
     const groupSourceIds = group.sources.map((s) => s.id);
     if (group.allChecked) {
-      const remaining = (
-        selectedSourceIds.length === 0 ? allCategorySourceIds : selectedSourceIds
-      ).filter((id) => !groupSourceIds.includes(id));
-      onSelectAllSources(remaining);
+      const currentSelected = isNoneSelected
+        ? []
+        : selectedSourceIds.length === 0
+        ? allCategorySourceIds
+        : selectedSourceIds;
+      const remaining = currentSelected.filter((id) => !groupSourceIds.includes(id));
+      onSelectAllSources(remaining.length === 0 ? ['__NONE__'] : remaining);
     } else {
-      const base = selectedSourceIds.length === 0 ? allCategorySourceIds : selectedSourceIds;
-      const combined = Array.from(new Set([...base, ...groupSourceIds]));
-      onSelectAllSources(combined);
+      const currentSelected = isNoneSelected
+        ? []
+        : selectedSourceIds.length === 0
+        ? allCategorySourceIds
+        : selectedSourceIds;
+      const combined = Array.from(new Set([...currentSelected, ...groupSourceIds]));
+      if (allCategorySourceIds.length > 0 && combined.length >= allCategorySourceIds.length) {
+        onSelectAllSources([]);
+      } else {
+        onSelectAllSources(combined);
+      }
+    }
+  };
+
+  const handleToggleChannel = (channelId: string) => {
+    const currentSelected = isNoneSelected
+      ? []
+      : selectedSourceIds.length === 0
+      ? allCategorySourceIds
+      : selectedSourceIds;
+    if (currentSelected.includes(channelId)) {
+      const remaining = currentSelected.filter((id) => id !== channelId);
+      onSelectAllSources(remaining.length === 0 ? ['__NONE__'] : remaining);
+    } else {
+      const combined = [...currentSelected, channelId];
+      if (allCategorySourceIds.length > 0 && combined.length >= allCategorySourceIds.length) {
+        onSelectAllSources([]);
+      } else {
+        onSelectAllSources(combined);
+      }
     }
   };
 
@@ -154,10 +192,10 @@ export const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
                 </button>
                 <button
                   onClick={() => {
-                    if (isAllSelected) onSelectAllSources([]);
-                    else onSelectAllSources(allCategorySourceIds);
+                    if (isAllSelected) onSelectAllSources(['__NONE__']);
+                    else onSelectAllSources([]);
                   }}
-                  className="text-xs font-semibold text-[#00A859]"
+                  className="text-xs font-semibold text-[#00A859] px-2 py-1 rounded bg-[#00A859]/10"
                 >
                   {isAllSelected ? 'Bỏ chọn hết' : 'Chọn tất cả'}
                 </button>
@@ -226,7 +264,8 @@ export const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
                       <div className="mt-2 ml-7 pl-2 border-l border-slate-200 dark:border-slate-700 space-y-1.5 pt-1">
                         {group.sources.map((s) => {
                           const isChecked =
-                            selectedSourceIds.length === 0 || selectedSourceIds.includes(s.id);
+                            !isNoneSelected &&
+                            (selectedSourceIds.length === 0 || selectedSourceIds.includes(s.id));
                           const channelName = s.title.includes(' - ')
                             ? s.title.split(' - ').slice(1).join(' - ')
                             : 'Trang chủ';
@@ -236,7 +275,7 @@ export const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
                                 <input
                                   type="checkbox"
                                   checked={isChecked}
-                                  onChange={() => onToggleSourceId(s.id)}
+                                  onChange={() => handleToggleChannel(s.id)}
                                   className="w-3.5 h-3.5 rounded text-[#00A859] border-slate-300"
                                 />
                                 <span className="truncate text-slate-600 dark:text-slate-300">

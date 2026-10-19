@@ -150,6 +150,9 @@ export async function queryArticlesFromDB(filter: ArticleQueryFilter): Promise<{
 
   // Lọc theo Nguồn báo (sourceIds)
   if (filter.sourceIds && filter.sourceIds.length > 0) {
+    if (filter.sourceIds.includes('__NONE__')) {
+      return { articles: [], total: 0 };
+    }
     const allowedSourceSet = new Set(filter.sourceIds);
     rawArticles = rawArticles.filter((art) => allowedSourceSet.has(art.sourceId));
   }
