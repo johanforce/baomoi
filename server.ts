@@ -2,6 +2,24 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { decode as heDecode } from 'he';
+import * as cheerio from 'cheerio';
+
+// Helper làm sạch HTML và giải mã thực thể tiếng Việt chuẩn xác
+export const cleanServerText = (str: string): string => {
+  if (!str || typeof str !== 'string') return '';
+  let res = str.replace(/<[^>]*>/g, ' ');
+  for (let i = 0; i < 2; i++) {
+    if (!res.includes('&')) break;
+    try {
+      const decoded = heDecode(res);
+      if (decoded === res) break;
+      res = decoded;
+    } catch {
+      break;
+    }
+  }
+  return res.replace(/\s+/g, ' ').trim();
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -309,90 +327,124 @@ app.get('/api/article-content', async (req: Request, res: Response) => {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
         'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
+        Referer: validatedUrl.origin + '/',
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Báo trả về HTTP ${response.status}`);
+      console.warn(`[article-content] Báo ${validatedUrl.hostname} trả về HTTP ${response.status}`);
+      return res.json({
+        success: false,
+        upstreamStatus: response.status,
+        message: `Báo gốc phản hồi HTTP ${response.status} (có thể giới hạn truy cập hoặc yêu cầu đăng nhập). Hệ thống sẽ phát bản tóm tắt.`,
+        title: '',
+        sapo: '',
+        paragraphs: [],
+      });
     }
 
     const html = await response.text();
+    const $ = cheerio.load(html);
 
-    // 1. Tiêu đề
-    let title = '';
-    const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-    if (titleMatch) {
-      title = heDecode(
-        titleMatch[1]
-          .replace(/<[^>]*>/g, ' ')
-          .replace(/(\s*[-|]\s*Báo.*|\s*[-|]\s*VnExpress.*|\s*[-|]\s*Tuổi Trẻ.*|\s*[-|]\s*Thanh Niên.*)$/i, '')
-          .trim()
-      );
-    }
+    // 1. Loại bỏ các thành phần rác, quảng cáo, menu, bình luận, social
+    $('script, style, noscript, iframe, svg, nav, footer, header, form, button, .header, .footer, .menu, .sidebar, .comments, .comment, .advertisement, .banner, .box-category, .relate-news, .related-news, .tin-lien-quan, .box-lienquan, .recommend, .social-share, .share-bottom, .tags, .tag-list, .author-info, figure, figcaption, table').remove();
 
-    // 2. Sapo / Mô tả mở đầu
-    let sapo = '';
-    const metaDesc =
-      html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([\s\S]*?)["']/i) ||
-      html.match(/<meta[^>]+content=["']([\s\S]*?)["'][^>]+name=["']description["']/i);
-    if (metaDesc) {
-      sapo = heDecode(metaDesc[1].trim());
-    }
+    // 2. Tiêu đề bài viết
+    let title = $('h1').first().text().trim() ||
+                $('meta[property="og:title"]').attr('content')?.trim() ||
+                $('title').text().replace(/(\s*[-|]\s*Báo.*|\s*[-|]\s*VnExpress.*|\s*[-|]\s*Tuổi Trẻ.*|\s*[-|]\s*Thanh Niên.*)$/i, '').trim();
+    title = cleanServerText(title || '');
 
-    // 3. Vùng chứa bài viết
-    let contentHtml = '';
-    const containerRegexes = [
-      /<div[^>]+data-role=["']content["'][^>]*>([\s\S]*?)<\/div>\s*<(?:script|div|footer)/i,
-      /<div[^>]+class=["'][^"']*(?:detail-content|detail__content|fck_detail|singular-content|maincontent|article-content|content-detail)[^"']*["'][^>]*>([\s\S]*?)<\/article>/i,
-      /<article[^>]*>([\s\S]*?)<\/article>/i,
-      /<div[^>]+class=["'][^"']*(?:detail-content|detail__content|fck_detail|singular-content|maincontent|article-content|content-detail)[^"']*["'][^>]*>([\s\S]*?)<\/div>/i,
+    // 3. Sapo / Mô tả mở đầu
+    let sapo = $('.sapo, .detail-sapo, .short_intro, .lead, h2.sapo, h2.lead').first().text().trim() ||
+               $('meta[name="description"]').attr('content')?.trim() ||
+               $('meta[property="og:description"]').attr('content')?.trim() || '';
+    sapo = cleanServerText(sapo);
+
+    // 4. Tìm container chứa nội dung bài báo đầy đủ nhất
+    const candidateSelectors = [
+      'article.fck_detail',
+      '.fck_detail',
+      '.detail__content',
+      '.detail-content',
+      '.singular-content',
+      '.maincontent',
+      '#maincontent',
+      '.content-detail',
+      '.article-body',
+      '.the-article-body',
+      '.news-content',
+      '[itemprop="articleBody"]',
+      '.post-content',
+      '.entry-content',
+      'article',
+      'main',
     ];
 
-    for (const regex of containerRegexes) {
-      const m = html.match(regex);
-      if (m && m[1].length > 400) {
-        contentHtml = m[1];
-        break;
+    let $container: cheerio.Cheerio<any> | null = null;
+    let maxPCount = 0;
+
+    for (const sel of candidateSelectors) {
+      const el = $(sel);
+      if (el.length > 0) {
+        const pCount = el.find('p, div.Normal').length;
+        if (pCount > maxPCount) {
+          maxPCount = pCount;
+          $container = el;
+        }
       }
     }
 
-    if (!contentHtml) {
-      contentHtml = html;
+    if (!$container || maxPCount < 2) {
+      $container = $('body');
     }
 
-    // Làm sạch scripts, styles, comments, figure, table
-    const cleanedHtml = contentHtml
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
-      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
-      .replace(/<!--[\s\S]*?-->/g, ' ')
-      .replace(/<figure[^>]*>[\s\S]*?<\/figure>/gi, ' ')
-      .replace(/<table[^>]*>[\s\S]*?<\/table>/gi, ' ');
-
-    const pMatches = cleanedHtml.match(/<p\b[^>]*>([\s\S]*?)<\/p>/gi) || [];
     const paragraphs: string[] = [];
 
-    // Nếu có sapo thì đưa vào đầu
-    if (sapo && sapo.length > 25) {
+    // Nếu có sapo rõ ràng thì đưa vào đoạn đầu tiên
+    if (sapo && sapo.length > 20) {
       paragraphs.push(sapo);
     }
 
-    for (const p of pMatches) {
-      const clean = heDecode(p.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim());
+    // Trích xuất tất cả các đoạn văn trong container (hỗ trợ cả thẻ Normal của VnExpress)
+    $container.find('p, div.Normal, h2, h3').each((_, el) => {
+      // Bỏ qua các khối nằm trong caption, figure, author box
+      if ($(el).parents('figure, figcaption, table, .caption, .fig-image, .box-lienquan, .author').length > 0) {
+        return;
+      }
+
+      const raw = $(el).text();
+      const clean = cleanServerText(raw);
+
       if (
-        clean.length > 25 &&
+        clean.length > 15 &&
         !clean.toLowerCase().startsWith('ảnh:') &&
         !clean.toLowerCase().startsWith('nguồn:') &&
         !clean.toLowerCase().startsWith('video:') &&
+        !clean.toLowerCase().startsWith('theo ') &&
         !clean.toLowerCase().includes('chúc bạn đọc báo vui vẻ') &&
         !clean.toLowerCase().includes('chọn báo') &&
         !clean.toLowerCase().includes('swiper') &&
         !clean.toLowerCase().includes('@font-face') &&
         !clean.toLowerCase().includes('bấm vào đây để') &&
-        !clean.toLowerCase().includes('đăng ký nhận tin')
+        !clean.toLowerCase().includes('đăng ký nhận tin') &&
+        !clean.toLowerCase().includes('độc giả có thể theo dõi')
       ) {
-        if (clean !== sapo && !paragraphs.includes(clean)) {
+        if (!paragraphs.includes(clean) && clean !== sapo) {
+          paragraphs.push(clean);
+        }
+      }
+    });
+
+    // Fallback: nếu trang báo đặc biệt không dùng thẻ p
+    if (paragraphs.length <= 1) {
+      const fullText = $container.text();
+      const rawLines = fullText.split(/\n+/);
+      for (const line of rawLines) {
+        const clean = cleanServerText(line);
+        if (clean.length > 30 && !paragraphs.includes(clean) && clean !== sapo) {
           paragraphs.push(clean);
         }
       }
@@ -412,14 +464,60 @@ app.get('/api/article-content', async (req: Request, res: Response) => {
 
     return res.json(result);
   } catch (err: any) {
-    console.error('Lỗi khi tải nội dung bài viết:', err);
-    return res.status(500).json({ error: err.message || 'Không thể tải nội dung bài viết' });
+    console.warn('[article-content] Không thể tải toàn bộ bài viết từ link:', err?.message || err);
+    return res.json({
+      success: false,
+      error: err?.message || 'Không thể tải nội dung bài viết',
+      title: '',
+      sapo: '',
+      paragraphs: [],
+    });
   }
 });
 
 /**
+ * Chia một đoạn văn bản dài thành các phân đoạn tự nhiên (<= 180 ký tự) tại dấu câu hoặc khoảng trắng
+ */
+function splitTextIntoTTSPhrases(text: string, maxLen = 180): string[] {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  if (clean.length <= maxLen) return [clean];
+
+  const phrases: string[] = [];
+  // Tách theo dấu câu lớn: chấm, hỏi, than, chấm phẩy, hai chấm, hoặc xuống dòng
+  const rawSentences = clean.split(/(?<=[.?!;:\n])\s+/);
+
+  for (const sentence of rawSentences) {
+    const s = sentence.trim();
+    if (!s) continue;
+    if (s.length <= maxLen) {
+      phrases.push(s);
+      continue;
+    }
+    // Nếu câu dài hơn maxLen, tách tiếp tại dấu phẩy hoặc khoảng trắng
+    let remaining = s;
+    while (remaining.length > maxLen) {
+      let splitIdx = remaining.lastIndexOf(',', maxLen);
+      if (splitIdx < 60) {
+        splitIdx = remaining.lastIndexOf(' ', maxLen);
+      }
+      if (splitIdx < 30) {
+        splitIdx = maxLen;
+      }
+      const part = remaining.slice(0, splitIdx).trim();
+      if (part) phrases.push(part);
+      remaining = remaining.slice(splitIdx).replace(/^[\s,]+/, '').trim();
+    }
+    if (remaining) {
+      phrases.push(remaining);
+    }
+  }
+
+  return phrases.filter((p) => p.length > 0);
+}
+
+/**
  * Route GET /api/tts?text=<text>
- * Trả về file âm thanh giọng nữ Google tiếng Việt chuẩn ("Chị Google")
+ * Nhận một đoạn văn bản đầy đủ, tự động chia nhỏ và ghép thành một file MP3 liền mạch duy nhất
  */
 app.get('/api/tts', async (req: Request, res: Response) => {
   const text = typeof req.query.text === 'string' ? req.query.text.trim() : '';
@@ -427,28 +525,55 @@ app.get('/api/tts', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Thiếu tham số text' });
   }
 
-  try {
-    const safeText = text.slice(0, 200);
-    const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(
-      safeText
-    )}&tl=vi&client=tw-ob`;
-
-    const audioRes = await fetch(googleTtsUrl, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        Referer: 'https://translate.google.com/',
-      },
-    });
-
-    if (!audioRes.ok) {
-      throw new Error(`Google TTS status ${audioRes.status}`);
-    }
-
-    const audioBuffer = await audioRes.arrayBuffer();
+  // Giới hạn an toàn một đoạn không quá 2500 ký tự
+  const safeText = text.slice(0, 2500);
+  const cacheKey = `tts:${safeText}`;
+  const cached = cache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) {
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Cache-Control', 'public, max-age=86400');
-    return res.send(Buffer.from(audioBuffer));
+    return res.send(Buffer.from(cached.content, 'base64'));
+  }
+
+  try {
+    const phrases = splitTextIntoTTSPhrases(safeText, 180);
+    const audioBuffers: Buffer[] = [];
+
+    // Tải tuần tự các đoạn âm thanh và ghép thành một luồng MP3 duy nhất
+    for (const phrase of phrases) {
+      const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(
+        phrase
+      )}&tl=vi&client=tw-ob`;
+
+      const audioRes = await fetch(googleTtsUrl, {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+          Referer: 'https://translate.google.com/',
+        },
+      });
+
+      if (audioRes.ok) {
+        const ab = await audioRes.arrayBuffer();
+        audioBuffers.push(Buffer.from(ab));
+      }
+    }
+
+    if (audioBuffers.length === 0) {
+      throw new Error('Không thể tải âm thanh từ Google TTS');
+    }
+
+    // Ghép tất cả các đoạn MP3 thành một file MP3 liền mạch
+    const combinedBuffer = Buffer.concat(audioBuffers);
+
+    cache.set(cacheKey, {
+      content: combinedBuffer.toString('base64'),
+      timestamp: Date.now(),
+    });
+
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.send(combinedBuffer);
   } catch (err: any) {
     console.warn('Lỗi Google TTS upstream:', err?.message || err);
     return res.status(502).json({ error: 'Lỗi tải âm thanh Google TTS' });

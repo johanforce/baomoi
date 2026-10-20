@@ -116,7 +116,7 @@ export const SourceRow: React.FC<SourceRowProps> = ({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-slate-900 dark:text-white text-sm sm:text-base break-words">
+              <span className="font-bold text-slate-900 dark:text-white text-sm sm:text-base whitespace-normal break-words block">
                 {source.title}
               </span>
               <StatusDot state={currentState} showLabel={true} />

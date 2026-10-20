@@ -132,8 +132,9 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
       ]),
       ...feeds('Báo Nhân Dân', P_ND, ND, [
         ['home', 'Trang chủ'],
-        ['chinhtri-1171', 'Chính trị'],
-        ['xahoi-1219', 'Xã hội'],
+        ['chinhtri', 'Chính trị'],
+        ['xahoi', 'Xã hội'],
+        ['chungkhoan', 'Kinh doanh'],
       ]),
       ...feeds('Báo Quân đội nhân dân', P_QD, QD, [
         ['tin-tuc-moi-nhat', 'Tin mới nhất'],
@@ -155,7 +156,6 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
     sources: [
       ...feeds('VnExpress', P_VNE, VNE, [
         ['the-gioi', 'Thế giới'],
-        ['the-gioi/quan-su', 'Quân sự'],
       ]),
       ...feeds('Báo Tuổi Trẻ', P_TT, TT, [
         ['the-gioi', 'Thế giới'],
@@ -165,8 +165,7 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
         ['the-gioi/quan-su', 'Quân sự thế giới'],
       ]),
       ...feeds('Báo Dân Trí', P_DT, DT, [
-        ['the-gioi', 'Thế giới'],
-        ['the-gioi/diem-nong', 'Điểm nóng'],
+        ['the-gioi', 'Thế giới']
       ]),
       ...feeds('Báo VietNamNet', P_VNN, VNN, [
         ['the-gioi', 'Thế giới'],
@@ -186,7 +185,7 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
         ['the-gioi', 'Thế giới'],
       ]),
       ...feeds('Báo Nhân Dân', P_ND, ND, [
-        ['thegioi-1191', 'Thế giới'],
+        ['thegioi', 'Thế giới'],
       ]),
       ...feeds('Báo Quân đội nhân dân', P_QD, QD, [
         ['quoc-te', 'Quốc tế'],
@@ -202,24 +201,19 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
     sources: [
       ...feeds('VnExpress', P_VNE, VNE, [
         ['kinh-doanh', 'Kinh doanh'],
-        ['bat-dong-san', 'Bất động sản'],
-        ['chung-khoan', 'Chứng khoán'],
-        ['doanh-nghiep', 'Doanh nghiệp'],
+        ['bat-dong-san', 'Bất động sản']
       ]),
       ...feeds('Báo Tuổi Trẻ', P_TT, TT, [
         ['kinh-doanh', 'Kinh doanh'],
-        ['bat-dong-san', 'Bất động sản'],
       ]),
       ...feeds('Báo Thanh Niên', P_TN, TN, [
         ['kinh-te', 'Kinh tế'],
-        ['kinh-te/thi-truong', 'Thị trường'],
-        ['kinh-te/chung-khoan', 'Chứng khoán'],
-        ['kinh-te/dia-oc', 'Địa ốc'],
+        ['tieu-dung-thong-minh', 'Tiêu dùng thông minh'],
       ]),
       ...feeds('Báo Dân Trí', P_DT, DT, [
         ['kinh-doanh', 'Kinh doanh'],
         ['bat-dong-san', 'Bất động sản'],
-        ['tai-chinh-ngan-hang', 'Tài chính ngân hàng'],
+        ['gia-vang', 'Giá vàng'],
       ]),
       ...feeds('Báo VietNamNet', P_VNN, VNN, [
         ['kinh-doanh', 'Kinh doanh'],
@@ -267,7 +261,7 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
         ['kinh-te', 'Kinh tế'],
       ]),
       ...feeds('Báo Nhân Dân', P_ND, ND, [
-        ['kinhte-1181', 'Kinh tế'],
+        ['kinhte', 'Kinh tế'],
       ]),
     ],
   },
@@ -291,7 +285,6 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
       ]),
       ...feeds('Báo Dân Trí', P_DT, DT, [
         ['suc-manh-so', 'Sức mạnh số'],
-        ['suc-manh-so/san-pham', 'Sản phẩm'],
         ['khoa-hoc', 'Khoa học'],
       ]),
       ...feeds('Báo VietNamNet', P_VNN, VNN, [
@@ -323,7 +316,7 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
         ['cong-nghe', 'Công nghệ'],
       ]),
       ...feeds('Báo Nhân Dân', P_ND, ND, [
-        ['khoahoc-congnghe-1292', 'Khoa học - Công nghệ'],
+        ['khoahoc-congnghe', 'Khoa học - Công nghệ'],
       ]),
     ],
   },
@@ -337,7 +330,6 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
       ...feeds('VnExpress', P_VNE, VNE, [
         ['the-thao', 'Thể thao'],
         ['bong-da', 'Bóng đá'],
-        ['tennis', 'Tennis'],
       ]),
       ...feeds('Báo Tuổi Trẻ', P_TT, TT, [
         ['the-thao', 'Thể thao'],
@@ -349,8 +341,6 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
       ]),
       ...feeds('Báo Dân Trí', P_DT, DT, [
         ['the-thao', 'Thể thao'],
-        ['the-thao/bong-da-trong-nuoc', 'Bóng đá trong nước'],
-        ['the-thao/bong-da-chau-au', 'Bóng đá châu Âu'],
       ]),
       ...feeds('Báo VietNamNet', P_VNN, VNN, [
         ['the-thao', 'Thể thao'],
@@ -387,9 +377,6 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
     sources: [
       ...feeds('VnExpress', P_VNE, VNE, [
         ['giai-tri', 'Giải trí'],
-        ['gioi-sao', 'Giới sao'],
-        ['phim', 'Phim ảnh'],
-        ['nhac', 'Âm nhạc'],
       ]),
       ...feeds('Báo Tuổi Trẻ', P_TT, TT, [
         ['giai-tri', 'Giải trí'],
@@ -401,8 +388,6 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
       ]),
       ...feeds('Báo Dân Trí', P_DT, DT, [
         ['giai-tri', 'Giải trí'],
-        ['giai-tri/sao-viet', 'Sao Việt'],
-        ['giai-tri/dien-anh', 'Điện ảnh'],
       ]),
       ...feeds('Báo VietNamNet', P_VNN, VNN, [
         ['giai-tri', 'Giải trí'],
@@ -466,13 +451,9 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
         ['gioi-tre-215', 'Giới trẻ'],
         ['du-lich-253', 'Du lịch'],
       ]),
-      ...feeds('Báo Lao Động', P_LD, LD, [
-        ['doi-song', 'Đời sống'],
-        ['du-lich', 'Du lịch'],
-      ]),
       ...feeds('Báo Nhân Dân', P_ND, ND, [
-        ['vanhoa-1251', 'Văn hóa'],
-        ['du-lich-1257', 'Du lịch'],
+        ['vanhoa', 'Văn hóa'],
+        ['du-lich', 'Du lịch'],
       ]),
     ],
   },
@@ -485,18 +466,15 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
     sources: [
       ...feeds('VnExpress', P_VNE, VNE, [
         ['suc-khoe', 'Sức khỏe'],
-        ['dinh-duong', 'Dinh dưỡng'],
       ]),
       ...feeds('Báo Tuổi Trẻ', P_TT, TT, [
         ['suc-khoe', 'Sức khỏe'],
       ]),
       ...feeds('Báo Thanh Niên', P_TN, TN, [
-        ['suc-khoe', 'Sức khỏe'],
-        ['suc-khoe/khoe-dep', 'Khỏe đẹp'],
+        ['suc-khoe', 'Sức khỏe']
       ]),
       ...feeds('Báo Dân Trí', P_DT, DT, [
-        ['suc-khoe', 'Sức khỏe'],
-        ['suc-khoe/tu-van', 'Tư vấn sức khỏe'],
+        ['suc-khoe', 'Sức khỏe']
       ]),
       ...feeds('Báo VietNamNet', P_VNN, VNN, [
         ['suc-khoe', 'Sức khỏe'],
@@ -513,10 +491,10 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
         ['y-te', 'Y tế & Sức khỏe'],
       ]),
       ...feeds('Báo VTV', P_VTV, VTV, [
-        ['suc-khoe', 'Sức khỏe'],
+        ['y-te', 'Y tế'],
       ]),
       ...feeds('Báo Nhân Dân', P_ND, ND, [
-        ['y-te-1309', 'Y tế'],
+        ['y-te', 'Y tế'],
       ]),
     ],
   },
@@ -539,7 +517,6 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
       ]),
       ...feeds('Báo Dân Trí', P_DT, DT, [
         ['phap-luat', 'Pháp luật'],
-        ['phap-luat/ho-so-vu-an', 'Hồ sơ vụ án'],
       ]),
       ...feeds('Báo VietNamNet', P_VNN, VNN, [
         ['phap-luat', 'Pháp luật'],
@@ -555,7 +532,7 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
         ['phap-luat', 'Pháp luật'],
       ]),
       ...feeds('Bộ Công An', P_MPS, MPS, [
-        ['1', 'Tin tức an ninh'],
+        ['36', 'Chỉ đạo điều hành'],  ['35', 'Hoạt động bộ công anh'],  ['34', 'Thông tin đối ngoại'],
       ]),
     ],
   },
@@ -574,12 +551,10 @@ export const DEFAULT_RAW_CATEGORIES: CategoryGroup[] = [
         ['xe', 'Xe'],
       ]),
       ...feeds('Báo Thanh Niên', P_TN, TN, [
-        ['xe', 'Xe'],
-        ['xe/thi-truong-xe', 'Thị trường xe'],
+        ['xe', 'Xe']
       ]),
       ...feeds('Báo Dân Trí', P_DT, DT, [
-        ['o-to-xe-may', 'Ô tô - Xe máy'],
-        ['o-to-xe-may/xe-dien', 'Xe điện'],
+        ['o-to-xe-may', 'Ô tô - Xe máy']
       ]),
       ...feeds('Báo VietNamNet', P_VNN, VNN, [
         ['oto-xe-may', 'Ô tô xe máy'],

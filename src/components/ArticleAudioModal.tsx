@@ -17,6 +17,7 @@ import {
   Check,
   Loader2,
   FileText,
+  AlertCircle,
 } from 'lucide-react';
 import { sourcesStore, useSourcesStore } from '../store/sourcesStore';
 import { decodeHtmlEntities } from '../utils/text';
@@ -28,7 +29,7 @@ export const ArticleAudioModal: React.FC = () => {
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
-  const [playbackRate, setPlaybackRate] = useState<number>(1.0);
+  const [playbackRate, setPlaybackRate] = useState<number>(1.5);
   const [isMinimized, setIsMinimized] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -67,7 +68,7 @@ export const ArticleAudioModal: React.FC = () => {
     const sentenceList: string[] = [intro, cleanTitle];
 
     if (fullArticleParagraphs.length > 0) {
-      // Phân tách từng đoạn của toàn bộ bài viết thành các câu ngắn
+      // Giữ nguyên các câu tự nhiên hoàn chỉnh theo dấu câu, không cắt vụn
       for (const p of fullArticleParagraphs) {
         const cleanP = decodeHtmlEntities(p).trim();
         if (!cleanP) continue;
@@ -116,7 +117,7 @@ export const ArticleAudioModal: React.FC = () => {
   }, [currentChunkIndex, totalChunks, estimatedTotalSec, isPlaying]);
 
   const progressPercent = useMemo(() => {
-    if (totalChunks <= 0) return 0;
+    if (totalChunks <= 0 || currentChunkIndex === 0) return 0;
     return Math.min(Math.round(((currentChunkIndex + 0.5) / totalChunks) * 100), 100);
   }, [currentChunkIndex, totalChunks]);
 
@@ -216,10 +217,16 @@ export const ArticleAudioModal: React.FC = () => {
 
       // Phương án 1: Giọng nữ Google trực tuyến ("Chị Google" chuẩn 100%)
       if (useGoogleOnlineVoice) {
-        const audioUrl = `/api/tts?text=${encodeURIComponent(text.slice(0, 190))}`;
+        const audioUrl = `/api/tts?text=${encodeURIComponent(text)}`;
         const audio = new Audio(audioUrl);
         audio.playbackRate = playbackRate;
         audioRef.current = audio;
+
+        // Preload trước câu kế tiếp để chuyển câu ngay lập tức, không có khoảng lặng
+        if (index + 1 < currentChunks.length) {
+          const nextAudio = new Audio(`/api/tts?text=${encodeURIComponent(currentChunks[index + 1])}`);
+          nextAudio.preload = 'auto';
+        }
 
         audio.onended = () => {
           if (!isPlayingRef.current || activeArticleIdRef.current !== currentArticleId) return;
@@ -326,41 +333,50 @@ export const ArticleAudioModal: React.FC = () => {
         const res = await fetch(`/api/article-content?url=${encodeURIComponent(article.link)}`, {
           signal: abortController.signal,
         });
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const data = await res.json();
+        const data = await res.json().catch(() => null);
         if (activeArticleIdRef.current === currentArticleId) {
-          if (Array.isArray(data.paragraphs) && data.paragraphs.length > 0) {
-            setFullArticleParagraphs(data.paragraphs);
-          } else if (data.sapo) {
-            setFullArticleParagraphs([data.sapo]);
+          let loadedParagraphs: string[] = [];
+          if (data && data.success && Array.isArray(data.paragraphs) && data.paragraphs.length > 0) {
+            loadedParagraphs = data.paragraphs;
+            setContentError(null);
+          } else if (data && data.sapo) {
+            loadedParagraphs = [data.sapo];
+            setContentError(data.message || 'Đọc theo bản tin tóm tắt.');
+          } else {
+            const fallbackReason =
+              data?.message ||
+              (data?.upstreamStatus ? `Báo giới hạn truy cập (HTTP ${data.upstreamStatus})` : 'Đọc theo bản tin tóm tắt.');
+            setContentError(fallbackReason);
           }
+          setFullArticleParagraphs(loadedParagraphs);
+          setIsLoadingFullContent(false);
+
+          // Bắt đầu đọc ngay sau khi nội dung bài viết đã sẵn sàng
+          setTimeout(() => {
+            if (activeArticleIdRef.current === currentArticleId) {
+              speakChunk(0, currentArticleId);
+            }
+          }, 150);
         }
       } catch (err: any) {
         if (err.name === 'AbortError') return;
         if (activeArticleIdRef.current === currentArticleId) {
           console.warn('Không thể tải toàn bộ bài viết, chuyển sang đọc tóm tắt:', err);
           setContentError('Đọc theo bản tin tóm tắt.');
-        }
-      } finally {
-        if (activeArticleIdRef.current === currentArticleId) {
           setIsLoadingFullContent(false);
+          // Fallback đọc bản tin tóm tắt nếu trang báo chặn tải toàn văn
+          setTimeout(() => {
+            if (activeArticleIdRef.current === currentArticleId) {
+              speakChunk(0, currentArticleId);
+            }
+          }, 150);
         }
       }
     };
 
     fetchFullContent();
 
-    // Bắt đầu đọc bài viết mới sau 200ms
-    const startTimer = setTimeout(() => {
-      if (activeArticleIdRef.current === currentArticleId) {
-        speakChunk(0, currentArticleId);
-      }
-    }, 200);
-
     return () => {
-      clearTimeout(startTimer);
       abortController.abort();
       stopAllAudio();
     };
@@ -714,12 +730,17 @@ export const ArticleAudioModal: React.FC = () => {
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
 
-                {fullArticleParagraphs.length > 0 && (
+                {fullArticleParagraphs.length > 0 ? (
                   <span className="inline-flex items-center gap-1 text-[11px] text-slate-300 bg-white/10 px-2 py-0.5 rounded-full">
                     <FileText className="w-3 h-3 text-emerald-400" />
                     <span>Toàn văn: {fullArticleParagraphs.length} đoạn</span>
                   </span>
-                )}
+                ) : contentError ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full" title={contentError}>
+                    <AlertCircle className="w-3 h-3 text-amber-400" />
+                    <span className="truncate max-w-[200px]">{contentError}</span>
+                  </span>
+                ) : null}
               </div>
             </div>
           </div>
@@ -740,23 +761,37 @@ export const ArticleAudioModal: React.FC = () => {
               ref={sentenceListRef}
               className="max-h-44 sm:max-h-56 overflow-y-auto p-3.5 rounded-2xl bg-black/40 border border-white/10 space-y-2 text-xs sm:text-sm leading-relaxed scroll-smooth"
             >
-              {chunks.map((sentence, idx) => {
-                const isActive = idx === currentChunkIndex;
-                return (
-                  <p
-                    key={idx}
-                    data-active={isActive ? 'true' : 'false'}
-                    onClick={() => speakChunk(idx)}
-                    className={`p-2.5 rounded-xl transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-emerald-500/25 text-emerald-300 font-semibold border-l-4 border-emerald-400 shadow-inner'
-                        : 'text-slate-300/80 hover:text-white hover:bg-white/5'
-                    }`}
-                  >
-                    {sentence}
+              {isLoadingFullContent ? (
+                <div className="py-8 flex flex-col items-center justify-center text-center space-y-2.5 text-slate-400">
+                  <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+                  <p className="text-xs font-bold text-slate-200">
+                    Đang mở liên kết bài viết và trích xuất toàn bộ nội dung...
                   </p>
-                );
-              })}
+                  <p className="text-[11px] text-slate-400 max-w-sm">
+                    Hệ thống đang truy cập link gốc để đọc toàn văn đầy đủ 100%, âm thanh TTS sẽ bắt đầu đọc ngay sau đó.
+                  </p>
+                </div>
+              ) : chunks.length === 0 ? (
+                <p className="text-center text-xs text-slate-400 py-6">Đang chuẩn bị nội dung đọc...</p>
+              ) : (
+                chunks.map((sentence, idx) => {
+                  const isActive = idx === currentChunkIndex;
+                  return (
+                    <p
+                      key={idx}
+                      data-active={isActive ? 'true' : 'false'}
+                      onClick={() => speakChunk(idx)}
+                      className={`p-2.5 rounded-xl transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-emerald-500/25 text-emerald-300 font-semibold border-l-4 border-emerald-400 shadow-inner'
+                          : 'text-slate-300/80 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      {sentence}
+                    </p>
+                  );
+                })
+              )}
             </div>
           </div>
 
